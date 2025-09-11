@@ -63,7 +63,7 @@ The system is instrumented with Java Melody for performance monitoring and provi
 <img src="../Image/CPU_Graph.png" alt="CPU Graph" width="600">  
 
 **Active Threads**  
-<img src="../Image/CPU_Graph_2" alt="Active Threads" width="600">  
+<img src="../Image/CPU_Graph_2.png" alt="Active Threads" width="600">  
 
 **HTTP / SQL / Spring Monitoring**  
 <img src="../Image/Memory_Table.png" alt="Memory Table" width="600">  

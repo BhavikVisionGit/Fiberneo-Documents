@@ -1,67 +1,228 @@
-# Fiberneo Service Deployment Guide
-
-## Overview
-This guide provides step-by-step instructions for deploying the Fiberneo Service using Helm charts on Kubernetes. The fiberneo service is a Spring Boot application that handles fiberneo-related operations and integrates with various VisionWaves platform services.
+# Fiberneo Deployment Guide
 
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
 2. [Service Dependencies](#service-dependencies)
-3. [Deployment Steps](#deployment-steps)
-   - [Step 1: Repository Setup](#step-1-repository-setup)
-   - [Step 2: Database Setup](#step-2-database-setup)
-   - [Step 3: Secret Manager Configuration](#step-3-secret-manager-configuration)
-   - [Step 4: Configure Secret Provider Service Account](#step-4-configure-secret-provider-service-account)
-   - [Step 5: Helm Chart Configuration](#step-5-helm-chart-configuration)
-   - [Step 6: Deploy Service](#step-6-deploy-service)
-4. [Service Configuration](#service-configuration)
-   - [Dependencies Configuration](#dependencies-configuration)
-   - [Templates Overview](#templates-overview)
+3. [Fiberneo-UI Deployment](#ui-deployment)
+   - [Deployment Steps](#deployment-steps-ui)
+     - [Step 1: Repository Setup](#step-1-repository-setup-ui)
+     - [Step 2: Helm Chart Configuration](#step-2-helm-chart-configuration-ui)
+     - [Step 3: Deploy Service](#step-3-deploy-service-ui)
+   - [Service Configuration](#service-configuration-ui)
+     - [Chart Configuration](#chart-configuration-ui)
+     - [Templates Overview](#templates-overview-ui)
+4. [Fiberneo-Backend Deployment](#backend-deployment)
+   - [Deployment Steps](#deployment-steps-backend)
+     - [Step 1: Repository Setup](#step-1-repository-setup-backend)
+     - [Step 2: Database Setup](#step-2-database-setup)
+     - [Step 3: Secret Manager Configuration](#step-3-secret-manager-configuration)
+     - [Step 4: Configure Secret Provider Service Account](#step-4-configure-secret-provider-service-account)
+     - [Step 5: Helm Chart Configuration](#step-5-helm-chart-configuration)
+     - [Step 6: Deploy Service](#step-6-deploy-service)
+   - [Service Configuration](#service-configuration-backend)
+     - [Dependencies Configuration](#dependencies-configuration)
+     - [Templates Overview](#templates-overview-backend)
 5. [Verification](#verification)
 6. [Troubleshooting](#troubleshooting)
-7. [Post-Deployment](#post-deployment)
-8. [Additional notes](#additional-notes)
+7. [Useful Commands](#useful-commands)
+8. [Additional Notes](#additional-notes)
+
+---
 
 ## Prerequisites
 
-Before deploying the fiberneo service, ensure the following prerequisites are met:
+Before deploying, ensure the following prerequisites are met:
 
 - ✅ **Kubernetes Cluster** is running and accessible
 - ✅ **Helm** is installed and configured (v3.x)
 - ✅ **Docker Registry** is accessible
-- ✅ **Vault Secret Manager** is configured
-- ✅ **Crypto.zip** is available for decryption
-- ✅ **Namespace 'ansible'** is created
-- ✅ **Required Dependencies** are deployed (see Service Dependencies section)
+- ✅ **Namespace `ansible`** is created
+- ✅ For Backend: **Vault Secret Manager** is configured, **Crypto.zip** is available for decryption
+- ✅ For UI: **Istio Gateway** is configured (for VirtualService)
+- ✅ Required dependencies are deployed (see Service Dependencies)
+
+---
 
 ## Service Dependencies
 
-The fiberneo service depends on the following services that must be deployed first:
+### Backend Dependencies
 
-### **Phase 1: Core Infrastructure (Required First)**
-1. **apigw** - API Gateway
-2. **keycloak** - Identity and Access Management
-3. **base-utility** - Core utility services
+- Phase 1: Core Infrastructure (Required First)
+  1. **apigw** - API Gateway
+  2. **keycloak** - Identity and Access Management
+  3. **base-utility** - Core utility services
+- Phase 2: Data & Cache Layer (Required Second)
+  4. **redis-stack-server** - Caching and session management
+  5. **onesearch** - Search engine infrastructure (Global Search)
+- Phase 3: Supporting Services
+  6. **identity-management-service**
+  7. **workflow-management-service**
+  8. **form-builder-service**
+  9. **vendor-service**
+  10. **fiberneo-service**
+  11. **analytics-service**
+  12. **data-inside-service**
+  13. **contract-service**
+  14. **document-service**
+  15. **sla-service**
 
-### **Phase 2: Data & Cache Layer (Required Second)**
-4. **redis-stack-server** - Caching and session management
-5. **onesearch** - Search engine infrastructure (Global Search)
+### UI Dependencies
 
-### **Phase 3: Supporting Services**
-6. **identity-management-service** - Identity management
-7. **workflow-management-service** - Workflow orchestration
-8. **form-builder-service** - Form creation and management
-9. **vendor-service** - Vendor management
-10. **fiberneo-service** - Material management
-11. **analytics-service** - Analytics service
-12. **data-inside-service** - Data inside service
-13. **contract-service** - Catalogue management
-14. **document-service** - Document management
-15. **sla-service** - SLA service
+- Phase 1: Core Infrastructure (Required First)
+  1. **keycloak** - Identity and Access Management
+  2. **Core-UI-shell** - For shell access
+  3. **UI-designer** - For `main.js` configuration, etc.
 
-## Deployment Steps
+---
 
-### Step 1: Repository Setup
+## Fiberneo-UI Deployment
+
+### Deployment Steps {#deployment-steps-ui}
+
+#### Step 1: Repository Setup {#step-1-repository-setup-ui}
+
+```bash
+# Clone the repository (if not already done)
+git clone <your-repo-name>
+cd <your-repo-name>
+
+# Navigate to FIBERNEO UI service directory
+cd fiberneo/ui/fiberneo/
+
+# Verify directory structure
+ls
+# Expected output: Chart.yaml  configmapfiles/  templates/  values.yaml
+
+# Verify Helm chart structure
+ls templates/
+# Expected output: confimap.yaml  deployment.yaml  hpa.yaml  service.yaml  virtualService.yaml  NOTES.txt  _helpers.tpl
+
+# Verify configmap files
+ls configmapfiles/
+# Expected output: nginx.conf
+```
+
+#### Step 2: Helm Chart Configuration {#step-2-helm-chart-configuration-ui}
+
+The FIBERNEO UI service Helm chart includes the following components:
+
+- Chart.yaml
+- values.yaml
+- templates/
+- configmapfiles/
+
+##### Chart Configuration {#chart-configuration-ui}
+
+```yaml
+# values.yaml (key fields)
+replicaCount: 1
+
+image:
+  repository: registry.visionwaves.com/fiberneo-ui
+  tag: fiberneo-demo-17_v15_ui_demo
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  name: fiberneo-ui
+  port: 80
+  targetPort: 8081
+
+resourcesLimits:
+  cpu: 100m
+  memory: 200M
+requestsResources:
+  cpu: 10m
+  memory: 100M
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+livenessProbe:
+  path: /nginx_status
+  initialDelaySeconds: 80
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  path: /nginx_status
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+virtualService:
+  enabled: true
+  context: /fiberneo
+  rewriteForSlash: false
+
+gateway:
+  enabled: true
+  name: ingressgateway
+
+configMap:
+  createIndexhtmlConfigmap: false
+  createkeycloakContextConfigmap: false
+  createNginxconfConfigmap: true
+  defaultMode: '0755'
+
+exporter:
+  enable: false
+  name: nginx-exporter
+  image:
+    repository: nginx/nginx-prometheus-exporter
+    pullPolicy: Always
+    tag: 0.10.0
+  env:
+    SCRAPE_URI: http://localhost:8081/nginx_status
+    NGINX_RETRIES: '10'
+    TELEMETRY_PATH: /metrics
+```
+
+##### Templates Overview {#templates-overview-ui}
+
+1. `deployment.yaml` - Main UI application deployment with Nginx
+2. `service.yaml` - Kubernetes service for internal communication
+3. `hpa.yaml` - Horizontal Pod Autoscaler for scaling (if enabled)
+4. `confimap.yaml` - Nginx configuration files
+5. `virtualService.yaml` - Istio VirtualService for routing
+6. `NOTES.txt` - Post-deployment instructions
+
+#### Step 3: Deploy Service {#step-3-deploy-service-ui}
+
+```bash
+# Verify current directory
+pwd
+# Should be: /path/to/visionwaves-deployment/fiberneo/ui/fiberneo
+
+# Get service name from Chart.yaml
+cat Chart.yaml
+# Look for 'name' field: fiberneo-ui
+
+# Review image configuration in values.yaml
+grep -A 5 "image:" values.yaml
+# image:
+#   repository: registry.visionwaves.com/fiberneo-ui
+#   tag: fiberneo-demo-17_v15_ui_demo
+#   pullPolicy: Always
+
+# Deploy service using Helm
+helm upgrade fiberneo-ui -n ansible . --install
+
+# Check deployment status
+helm list -n ansible | grep fiberneo-ui
+```
+
+---
+
+## Fiberneo-Backend Deployment
+
+### Deployment Steps {#deployment-steps-backend}
+
+#### Step 1: Repository Setup {#step-1-repository-setup-backend}
 
 ```bash
 # Clone the repository (if not already done)
@@ -80,7 +241,7 @@ ls templates/
 # Expected output: configmap.yaml  deployment.yaml  hpa.yaml  service.yaml  serviceaccount.yaml  NOTES.txt  _helpers.tpl
 ```
 
-### Step 2: Database Setup
+#### Step 2: Database Setup {#step-2-database-setup}
 
 ```bash
 # Backup existing DB (optional)
@@ -113,17 +274,15 @@ SOURCE /path/to/yourfolder/FIBERNEO_WITHOUT_DATA.sql;
 #   mysql -u '' -p'' fiberneo < /path/to/FIBERNEO_WITHOUT_DATA.sql
 ```
 
-### Step 3: Secret Manager Configuration
+#### Step 3: Secret Manager Configuration {#step-3-secret-manager-configuration}
 
-**Vault Secret Manager Configuration:**
+1. Get svc of Vault from `vault` namespace and port-forward to 8200 to access the Vault UI.
+2. Login with the username and token from the Vault Secret Manager.
+3. Create secret in Vault Secret Manager with name: `fiberneo` (path `kv/data/fiberneo`). If it exists, verify and update values.
+4. Important: Decrypt and update values before creating the secret.
 
-1. Get svc of vault from vault namespace and make port forward to 8200 for accessing the vault UI
-2. Login with the username and token from the vault secret manager
-3. **Create secret in Vault Secret Manager with name: `fiberneo`** (i.e: kv/data/fiberneo (path of keyvalue of secret manager)) if exists then leave it as it is just check the secret value and update the values
+**Setup crypto environment:**
 
-4. **⚠️ Important: Decrypt and update these values before creating the secret:**
-
-**First, setup the crypto environment:**
 ```bash
 # Unzip the Crypto.zip file
 unzip Crypto.zip
@@ -133,29 +292,28 @@ cd Crypto/
 export E_C="tso*****sWM=" # Your E_C valid key value
 ```
 
-**Decrypt and update required values:**
+**Encrypt/decrypt required values:**
 
-1. **Database Configuration**:
-   ```bash
-   # encodeco.sh usage
-   # Encrypt: ./encodeco.sh e "VALUE_TO_BE_ENCRYPTED"
-   # Decrypt: ./encodeco.sh d "ENCODED_VALUE"
-   
-   # Encrypt MYSQL_URL and IP address
-   ./encodeco.sh e "jdbc:mysql://<MYSQL_HOST>:3306/FIBERNEO?useSSL=true"
-   
-   # Encrypt database credentials
-   ./encodeco.sh e "your_db_username"
-   ./encodeco.sh e "your_db_password"
-   ```
+```bash
+# encodeco.sh usage
+# Encrypt: ./encodeco.sh e "VALUE_TO_BE_ENCRYPTED"
+# Decrypt: ./encodeco.sh d "ENCODED_VALUE"
 
-5. **Create the secret with the following values:**
+# Encrypt MYSQL_URL and IP address
+./encodeco.sh e "jdbc:mysql://<MYSQL_HOST>:3306/FIBERNEO?useSSL=true"
+
+# Encrypt database credentials
+./encodeco.sh e "your_db_username"
+./encodeco.sh e "your_db_password"
+```
+
+5. Create the secret with the following values:
 
 ```bash
 # this is key use for encryption and decryption
 export E_C="tso********sWM="
 
-#Value for DB credentials
+# Value for DB credentials
 export MYSQL_URL="SQ36392E************QyfeWyN"
 export db_user="hqvI*************XIcg=="
 export db_user_pass="qawN*******xQ=="
@@ -194,9 +352,9 @@ export WORKFLOW_SERVICE_URL="http://workflow-workflow-mgmt/wfm/rest"
 export enttribe="FV9u6yvdusYmbzvqLIeEBA=="
 ```
 
-6. **It creates a new secret and its role (fiberneo-role) and ACL policy and check service account (fiberneo-sa) is configured properly**
+6. It creates a new secret and its role (`fiberneo-role`) and ACL policy; verify the service account (`fiberneo-sa`) is configured properly.
 
-### Step 4: Configure Secret Provider Service Account
+#### Step 4: Configure Secret Provider Service Account {#step-4-configure-secret-provider-service-account}
 
 ```bash
 # 1. Go to the helm chart folder where values.yaml exists
@@ -232,34 +390,28 @@ spec:
 # 4. Apply the above file changes
 ```
 
-### Step 5: Helm Chart Configuration
+#### Step 5: Helm Chart Configuration {#step-5-helm-chart-configuration}
 
 The fiberneo service Helm chart includes the following components:
 
-#### **Chart.yaml**
-- **Name:** fiberneo-service
-- **Version:** 0.1.0
-- **Type:** application
-
-#### **values.yaml Key Configuration**
+- Chart.yaml
+- values.yaml
+- templates: `deployment.yaml`, `service.yaml`, `hpa.yaml`, `configmap.yaml`, `serviceaccount.yaml`, `NOTES.txt`, `_helpers.tpl`
 
 ```yaml
-# Replica Configuration
+# values.yaml (key fields)
 replicaCount: 1
 
-# Image Configuration
 image:
   repository: registry.visionwaves.com/{Name According to You for Example: fiberneo-demo}
   tag: tag according to you for Example: v1.0.1
   pullPolicy: IfNotPresent
 
-# Service Configuration
 service:
   port: 80
   targetPort: 8081
   type: ClusterIP
 
-# Resource Limits
 resourcesLimits:
   cpu: 500m
   memory: 2Gi
@@ -267,7 +419,6 @@ requestsResources:
   cpu: 500m
   memory: 2Gi
 
-# Autoscaling
 autoscaling:
   enabled: true
   minReplicas: 1
@@ -275,7 +426,6 @@ autoscaling:
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 75
 
-# Health Checks
 livenessProbe:
   enable: true
   path: /fiberneo/rest/ping
@@ -290,17 +440,14 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 3
 
-# Environment Variables
 env:
   servicePort: 8081
   serviceContext: /fiberneo
   PORT: '8081'
   deploymentName: fiberneo-service
-  # ... other environment variables
-  # Update this according to the requirement
 ```
 
-### Step 6: Deploy Service
+#### Step 6: Deploy Service {#step-6-deploy-service}
 
 ```bash
 # Verify current directory
@@ -313,7 +460,6 @@ cat Chart.yaml
 
 # Review image configuration in values.yaml
 grep -A 5 "image:" values.yaml
-# Look for the image section like:
 # image:
 #   repository: registry.visionwaves.com/fiberneo
 #   tag: v1_service
@@ -329,9 +475,9 @@ helm upgrade <service-name> -n ansible . --set image.repository=registry.visionw
 #   --set image.tag=your-tag
 ```
 
-## Service Configuration
+### Service Configuration {#service-configuration-backend}
 
-### **Dependencies Configuration**
+#### Dependencies Configuration {#dependencies-configuration}
 
 The service connects to:
 
@@ -341,32 +487,36 @@ The service connects to:
 - **APM**: For application monitoring
 - **Other Services**: workflow-management, document-management, vendor-service
 
-#### **Templates Overview**
+#### Templates Overview {#templates-overview-backend}
 
-1. **deployment.yaml** - Main application deployment with sidecar container
-2. **service.yaml** - Kubernetes service for internal communication
-3. **hpa.yaml** - Horizontal Pod Autoscaler for scaling
-4. **configmap.yaml** - Configuration files (application.properties, scripts)
-5. **serviceaccount.yaml** - Service account for workload identity
-6. **NOTES.txt** - Post-deployment instructions
+1. `deployment.yaml` - Main application deployment with sidecar container
+2. `service.yaml` - Kubernetes service for internal communication
+3. `hpa.yaml` - Horizontal Pod Autoscaler for scaling
+4. `configmap.yaml` - Configuration files (`application.properties`, scripts)
+5. `serviceaccount.yaml` - Service account for workload identity
+6. `NOTES.txt` - Post-deployment instructions
+
+---
 
 ## Verification
 
-### **1. Check Pod Status**
+### Backend
+
+#### 1. Check Pod Status
 ```bash
 kubectl get pods -n ansible | grep fiberneo
 # Expected: Running status ( should be like this running 3/3 or 4/4 depending on number of replicas)
-Example : fiberneo-service-7f9ddb4bc8-smttz    4/4     Running  0  4d21h
+# Example: fiberneo-service-7f9ddb4bc8-smttz    4/4     Running  0  4d21h
 ```
 
-### **2. Check Service Status**
+#### 2. Check Service Status
 ```bash
 kubectl get svc -n ansible | grep fiberneo
 # Expected: ClusterIP service on port 80
-fiberneo-service   ClusterIP  10.96.223.101  <none>  80/TCP
+# fiberneo-service   ClusterIP  10.96.223.101  <none>  80/TCP
 ```
 
-### **3. Check Health Endpoint**
+#### 3. Check Health Endpoint
 ```bash
 # Port forward to test locally
 kubectl port-forward -n ansible svc/fiberneo-service 8080:80
@@ -374,10 +524,10 @@ kubectl port-forward -n ansible svc/fiberneo-service 8080:80
 # Test health endpoint
 curl http://localhost:8080/fiberneo/rest/ping
 # Expected: 200 OK response
-Example : {"status":"success"}fiberneo-service-7f9ddb4bc8-smttz:/opt/enttribe/fiberneo$
+# Example: {"status":"success"}
 ```
 
-### **4. Check Logs**
+#### 4. Check Logs
 ```bash
 # Check if service started successfully or not
 kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service --tail=100 | grep "service started successfully"
@@ -386,146 +536,252 @@ kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service --tail=100
 # Check for any startup errors or connection issues
 ```
 
-### **5. Check HPA Status**
+#### 5. Check HPA Status
 ```bash
 kubectl get hpa -n ansible fiberneo-service
 # Expected: HPA configured with CPU/Memory targets
-# NAME                  REFERENCE                        TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
-# fiberneo-service   Deployment/fiberneo-service   <unknown>/75%, <unknown>/75%   1         3         1          1day
+# NAME               REFERENCE                        TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
+# fiberneo-service   Deployment/fiberneo-service      <unknown>/75%, <unknown>/75%   1         3         1          1day
 ```
 
+### UI
+
+#### 1. Check Pod Status
+```bash
+kubectl get pods -n ansible | grep fiberneo-ui
+# Expected: Running status (should be like this running 1/1)
+```
+
+#### 2. Check Service Status
+```bash
+kubectl get svc -n ansible | grep fiberneo-ui
+# Expected: ClusterIP service on port 80
+```
+
+#### 3. Check VirtualService Status
+```bash
+kubectl get virtualservice -n ansible | grep fiberneo-ui
+# Expected: ansible  fiberneo-ui  ["keycloak-gw"]
+```
+
+#### 4. Check Health Endpoint
+```bash
+# Port forward to test locally
+kubectl port-forward -n ansible svc/fiberneo-ui 8081:80
+
+# Test health endpoint
+curl http://localhost:8081/nginx_status
+# Expected: 200 OK response with nginx status
+
+# Test main application
+curl http://localhost:8081/
+# Expected: HTML content of the FIBERNEO UI
+```
+
+#### 5. Check Logs
+```bash
+# Check if nginx started successfully
+kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-ui --tail=100
+
+# Check for any startup errors or configuration issues
+kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-ui -f
+```
+
+#### 6. Check ConfigMap
+```bash
+kubectl get configmap -n ansible | grep fiberneo-ui
+# Expected: ConfigMap with nginx configuration
+
+# View nginx configuration
+kubectl get configmap -n ansible fiberneo-ui-cm -o yaml
+```
+
+---
+
 ## Troubleshooting
- 
-### **Common Issues**
- 
+
+### Backend: Common Issues
+
 #### 1. Pod Not Starting
 ```bash
 # Check pod status
 kubectl describe pod -n ansible -l app.kubernetes.io/name=fiberneo-service
- 
+
 # Check logs
 kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service --previous
 ```
- 
+
 #### 2. Database Connection Issues
 ```bash
 # Verify database credentials in secret
 kubectl get secret -n ansible fiberneo -o yaml
- 
+
 # Check database connectivity from pod
 kubectl exec -n ansible -it deployment/fiberneo-service -- env | grep -E "(MYSQL|DB_)"
 ```
- 
+
 #### 3. Service Communication Issues
 ```bash
 # Check if dependent services are running
 kubectl get pods -n ansible | grep -E "(base-utility|workflow-management|form-builder)"
- 
+
 # Test service connectivity
 kubectl exec -n ansible -it deployment/fiberneo-service -- nslookup base-utility-service
 ```
- 
+
 #### 4. Secret Access Issues
 ```bash
 # Verify secret provider class
 kubectl get secretproviderclass -n ansible
- 
+
 # Check service account binding
 kubectl describe serviceaccount -n ansible fiberneo-sa
 ```
- 
-### Log Analysis
- 
+
+### UI: Common Issues
+
+#### 1. Pod Not Starting
 ```bash
-# Application logs
+# Check pod status
+kubectl describe pod -n ansible -l app.kubernetes.io/name=fiberneo-ui
+
+# Check logs
+kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-ui --previous
+```
+
+#### 2. Nginx Configuration Issues
+```bash
+# Verify nginx configmap
+kubectl get configmap -n ansible fiberneo-ui-cm -o yaml
+
+# Check if nginx.conf is properly mounted
+kubectl exec -n ansible -it deployment/fiberneo-ui -- cat /etc/nginx/nginx.conf
+```
+
+#### 3. VirtualService Issues
+```bash
+# Check VirtualService status
+kubectl describe virtualservice -n ansible fiberneo-ui
+
+# Verify Istio gateway is running
+kubectl get gateway -n ansible
+```
+
+#### 4. Service Communication Issues
+```bash
+# Check if dependent services are running
+kubectl get pods -n ansible | grep -E "(keycloak|core-ui-shell|ui-designer)"
+
+# Test service connectivity
+kubectl exec -n ansible -it deployment/fiberneo-ui -- nslookup keycloak-service
+```
+
+### Log Analysis (Backend & UI)
+
+```bash
+# Backend: Application logs
 kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service -f
- 
-# Sidecar logs
+
+# Backend: Sidecar logs
 kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service -c melody-service -f
- 
-# All logs with timestamps
+
+# UI: Application logs
+kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-ui -f
+
+# All logs with timestamps (example for backend)
 kubectl logs -n ansible -l app.kubernetes.io/name=fiberneo-service --timestamps
 ```
- 
+
 ### Performance Monitoring
- 
+
 ```bash
-# Check resource usage
+# Check resource usage (backend)
 kubectl top pods -n ansible | grep fiberneo
- 
-# Check HPA status
+
+# Check HPA status (backend)
 kubectl get hpa -n ansible | grep fiberneo
- 
-# Check metrics
+
+# Check metrics (backend)
 kubectl get --raw /apis/metrics.k8s.io/v1beta1/pods | jq '.items[] | select(.metadata.name | contains("fiberneo"))'
+
+# Check resource usage (ui)
+kubectl top pods -n ansible | grep fiberneo-ui
+
+# Check HPA status (ui, if enabled)
+kubectl get hpa -n ansible | grep fiberneo-ui
+
+# Check metrics (ui, if exporter enabled)
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/pods | jq '.items[] | select(.metadata.name | contains("fiberneo-ui"))'
 ```
- 
- 
-### 2. Configure Monitoring
-The service includes Prometheus metrics at `/fiberneo/actuator/prometheus`. Ensure your monitoring system is configured to scrape these metrics.
- 
-### 3. Backup Configuration
-```bash
-# Backup current configuration
-kubectl get configmap -n ansible fiberneo-service-conf -o yaml > fiberneo-config-backup.yaml
- 
-# Backup values
-helm get values fiberneo-service -n ansible > fiberneo-values-backup.yaml
-```
- 
-### **Useful Commands**
- 
+
+---
+
+## Useful Commands
+
+### Backend
+
 ```bash
 # Check pod events
 kubectl describe pod -n ansible -l app.kubernetes.io/name=fiberneo-service
- 
+
 # Check secret provider status
 kubectl get secretproviderclass -n ansible
- 
+
 # Check service account
 kubectl get sa -n ansible fiberneo-sa
- 
+
 # Check configmap
 kubectl get configmap -n ansible fiberneo-service-conf
- 
+
 # View application properties
 kubectl get configmap -n ansible fiberneo-service-conf -o yaml
- 
- 
- 
-#After deployment if need to restart the pods or update the service URLs in the application.properties if needed:
-# Edit the configmap and save so that pod will be restarted with the new image if chnaged.
+
+# Edit configmap and restart
 kubectl edit configmap -n ansible fiberneo-service-conf
- 
-# Restart the deployment to apply changes
 kubectl rollout restart deployment/fiberneo-service -n ansible
 ```
- 
-### **Rollback Instructions**
- 
+
+### UI
+
 ```bash
-# List releases
-helm list -n ansible
- 
-# Rollback to previous version
-helm rollback fiberneo-service -n ansible
- 
-# Or uninstall and reinstall
-helm uninstall fiberneo-service -n ansible
-helm upgrade fiberneo-service -n ansible .
+# Check pod events
+kubectl describe pod -n ansible -l app.kubernetes.io/name=fiberneo-ui
+
+# Check VirtualService
+kubectl get virtualservice -n ansible fiberneo-ui
+
+# Check configmap
+kubectl get configmap -n ansible fiberneo-ui-cm
+
+# View nginx configuration
+kubectl get configmap -n ansible fiberneo-ui-cm -o yaml
+
+# Edit configmap and restart
+kubectl edit configmap -n ansible fiberneo-ui-cm
+kubectl rollout restart deployment/fiberneo-ui -n ansible
+
+# Backup current configuration
+kubectl get configmap -n ansible fiberneo-ui-cm -o yaml > fiberneo-ui-config-backup.yaml
+
+# Backup values
+helm get values fiberneo-ui -n ansible > fiberneo-ui-values-backup.yaml
+
+# Port forward UI pod
+export POD_NAME=$(kubectl get pods --namespace ansible -l "app.kubernetes.io/name=fiberneo-ui,app.kubernetes.io/instance=fiberneo-ui" -o jsonpath="{.items[0].metadata.name}")
+echo "Visit http://127.0.0.1:8080 to use your application"
+kubectl --namespace ansible port-forward $POD_NAME 8080:80
 ```
- 
----
- 
-## Additional Notes
- 
-- The service includes a sidecar container for APM monitoring (melody-service)
-- Vault integration is configured for secret injection
-- The service supports horizontal pod autoscaling based on CPU and memory usage
-- All database connections are encrypted and use SSL certificates
-- The service is configured for production use with proper resource limits and health checks
- 
-For any issues or questions, refer to the application logs and check the dependency services status.
+
 ---
 
-**Note:** This deployment guide assumes you have the necessary permissions and access to Vault services, Kubernetes cluster, and the required dependencies. Always test in a non-production environment first.
+## Additional Notes
+
+- The Backend service includes a sidecar container for APM monitoring (melody-service)
+- Vault integration is configured for secret injection (Backend)
+- The Backend supports horizontal pod autoscaling based on CPU and memory usage
+- All database connections are encrypted and use SSL certificates (Backend)
+- The UI service uses **Nginx** with **Brotli compression** (optional exporter for metrics)
+- **Istio VirtualService** integration for UI routing
+- Both services are configured for production with proper resource limits and health checks
+
+**Note:** These deployment guides assume you have the necessary permissions and access to Kubernetes cluster (and Istio for UI), Vault services (for Backend), and required dependencies. Always test in a non-production environment first.

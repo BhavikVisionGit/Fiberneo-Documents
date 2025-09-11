@@ -1,4 +1,4 @@
-### Fiber-Model Application Operations Guide
+# Fiber-Model Application Operations Guide
 
 ## Introduction
 
@@ -59,17 +59,17 @@ The system is instrumented with Java Melody for performance monitoring and provi
 
 ### Screenshots Reference
 
-- **CPU/Memory Utilization**
-  <img src="Fiber-Model-Document/Image/CPU_Graph.png" alt="CPU Graph" width="600">
+**CPU/Memory Utilization**  
+<img src="../Image/CPU_Graph.png" alt="CPU Graph" width="600">  
 
-- **Active Threads**
-  <img src="Fiber-Model-Document/Image/CPU_Graph.png" alt="Active Threads" width="600">
+**Active Threads**  
+<img src="../Image/CPU_Graph.png" alt="Active Threads" width="600">  
 
-- **HTTP / SQL / Spring Monitoring**
-  <img src="Fiber-Model-Document/Image/Memory_Table.png" alt="Memory Table" width="600">
+**HTTP / SQL / Spring Monitoring**  
+<img src="../Image/Memory_Table.png" alt="Memory Table" width="600">  
 
-- **Error Logs and System Status**
-  <img src="Fiber-Model-Document/Image/System_Info.png" alt="System Info" width="600">
+**Error Logs and System Status**  
+<img src="../Image/System_Info.png" alt="System Info" width="600">
 
 ## Debugging Guide
 

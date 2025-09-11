@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <bpmn2:process id="LinkInstallationandConstruction293_Copy" name="Link Installation and Construction" processType="None" isClosed="false" isExecutable="true">
+    <bpmn2:extensionElements>
+      <camunda:properties>
+        <camunda:property name="workOrderIDPrefix" value="LIN"/>
+      </camunda:properties>
+    </bpmn2:extensionElements>
+    <bpmn2:startEvent id="StartEvent_1">
+      <bpmn2:outgoing>Flow_1f185jv</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:userTask id="Activity_1jhtlre" name="Acknowledge material delivery receipt" implementation="##unspecified">
+      <bpmn2:incoming>Flow_1f185jv</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1umyctq</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1f185jv" sourceRef="StartEvent_1" targetRef="Activity_1jhtlre"/>
+    <bpmn2:userTask id="Activity_06zrgq0" name="Assignment for testing" implementation="##unspecified">
+      <bpmn2:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="FormField_1ll25t7" type="boolean"/>
+        </camunda:formData>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1p1noxi</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1gzswts</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_08sqm7r" name="Perform test" implementation="##unspecified">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="candidateUsers">${FormField_1ll25t7}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1gzswts</bpmn2:incoming>
+      <bpmn2:incoming>Flow_10sf0gu</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_19vdksd</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1gzswts" sourceRef="Activity_06zrgq0" targetRef="Activity_08sqm7r"/>
+    <bpmn2:userTask id="Activity_0li45sh" name="Ready for service" implementation="##unspecified">
+      <bpmn2:incoming>Flow_0h3w98a</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1qkisi4</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_07g0qea" name="Issue WCC" implementation="##unspecified">
+      <bpmn2:incoming>Flow_1qkisi4</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0t1y1mk</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1qkisi4" sourceRef="Activity_0li45sh" targetRef="Activity_07g0qea"/>
+    <bpmn2:sequenceFlow id="Flow_06ij2os" sourceRef="Activity_1fc6xu6" targetRef="Activity_0s2iobt"/>
+    <bpmn2:sequenceFlow id="Flow_0ez3ux3" sourceRef="Activity_0s2iobt" targetRef="Activity_1xszl64"/>
+    <bpmn2:sequenceFlow id="Flow_07c2pp2" sourceRef="Activity_1xszl64" targetRef="Activity_08nt3xf"/>
+    <bpmn2:sequenceFlow id="Flow_1l9srn0" sourceRef="Activity_08nt3xf" targetRef="Activity_1rezr83"/>
+    <bpmn2:sequenceFlow id="Flow_0u76pro" sourceRef="Activity_1rezr83" targetRef="Activity_0b34b2g"/>
+    <bpmn2:serviceTask id="Activity_1fc6xu6" name="Trenching &amp; ducting - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Span/search?filter=id=ge=0;areaId.id==(id)&amp;offset=0&amp;size=200&amp;orderBy=modifiedTime&amp;orderType=desc</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Span</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">name</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Trenching and ducting</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Trenching and ducting":"Assign trenching and ducting"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1y6zaqf</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_06ij2os</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="Activity_0s2iobt" name="Access chamber - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Structure/search?filter=id%3Dge%3D0%3BareaId.id==(id)%3Btype%3D%3D%27ACCESS%20CHAMBER%27&amp;offset=0&amp;size=200</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Structure</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">name</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Access chamber installation</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Access chamber installation":"Assign access chamber installation"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_06ij2os</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0ez3ux3</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="Activity_1xszl64" name="Duct inspection - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Span/search?filter=id=ge=0;areaId.id==(id)&amp;offset=0&amp;size=200&amp;orderBy=modifiedTime&amp;orderType=desc</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Span</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">name</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Duct inspection</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Duct inspection":"Assign duct inspection"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_0ez3ux3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_07c2pp2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="Activity_08nt3xf" name="Fiber placing - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Transmedia/search?filter=id=ge=0;areaId.id==(id)&amp;offset=0&amp;size=200</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Transmedia</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">name</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Fiber placing</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Fiber placing":"Assign fiber placing"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_07c2pp2</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1l9srn0</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="Activity_1rezr83" name="Equipment installation - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Equipment/search?filter=id=ge=0;areaId.id==(id)&amp;offset=0&amp;size=200</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Equipment</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">equipmentName</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Equipment installation</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Equipment installation":"Assign equipment installation"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1l9srn0</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0u76pro</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="Activity_0b34b2g" name="Splicing installation - External task" implementation="##WebService" camunda:type="external" camunda:topic="ChildEntityTaskCreatorV2">
+      <bpmn2:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="searchUrl">/Transmedia/search?filter=id=ge=0;areaId.id==(id)&amp;offset=0&amp;size=200</camunda:inputParameter>
+          <camunda:inputParameter name="entityType">Transmedia</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityIdKeyName">id</camunda:inputParameter>
+          <camunda:inputParameter name="childEntityDisplayKeyName">name</camunda:inputParameter>
+          <camunda:inputParameter name="projectTemplateName">Link Construction</camunda:inputParameter>
+          <camunda:inputParameter name="iterativeTaskToCopyfromTemplate">Splicing</camunda:inputParameter>
+          <camunda:inputParameter name="taskToCopyfromTemplatePerGroup">{
+"Splicing":"Assign for splicing"
+}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_0u76pro</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1ouzjge</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:parallelGateway id="Gateway_1d67s6u">
+      <bpmn2:incoming>Flow_1umyctq</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1y6zaqf</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_06i5huw</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_1p1noxi</bpmn2:outgoing>
+    </bpmn2:parallelGateway>
+    <bpmn2:sequenceFlow id="Flow_1umyctq" sourceRef="Activity_1jhtlre" targetRef="Gateway_1d67s6u"/>
+    <bpmn2:sequenceFlow id="Flow_1y6zaqf" sourceRef="Gateway_1d67s6u" targetRef="Activity_1fc6xu6"/>
+    <bpmn2:userTask id="Activity_09sjq5n" name="As-built capture" implementation="##unspecified">
+      <bpmn2:incoming>Flow_06i5huw</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0885x2s</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_06i5huw" sourceRef="Gateway_1d67s6u" targetRef="Activity_09sjq5n"/>
+    <bpmn2:endEvent id="Event_0guisn7">
+      <bpmn2:incoming>Flow_0885x2s</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_0885x2s" sourceRef="Activity_09sjq5n" targetRef="Event_0guisn7"/>
+    <bpmn2:sequenceFlow id="Flow_1p1noxi" sourceRef="Gateway_1d67s6u" targetRef="Activity_06zrgq0"/>
+    <bpmn2:userTask id="Activity_1xhwr78" name="Review test" implementation="##unspecified">
+      <bpmn2:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="FormField_2f9pslk" type="boolean"/>
+        </camunda:formData>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_19vdksd</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_16aeopq</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_19vdksd" sourceRef="Activity_08sqm7r" targetRef="Activity_1xhwr78"/>
+    <bpmn2:exclusiveGateway id="Gateway_0x1kxvl">
+      <bpmn2:incoming>Flow_16aeopq</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_10sf0gu</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_13genyu</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="Flow_16aeopq" sourceRef="Activity_1xhwr78" targetRef="Gateway_0x1kxvl"/>
+    <bpmn2:sequenceFlow id="Flow_10sf0gu" name="Reject" sourceRef="Gateway_0x1kxvl" targetRef="Activity_08sqm7r">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">${FormField_2f9pslk=="false"}</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:endEvent id="Event_0qzc14n">
+      <bpmn2:incoming>Flow_1ouzjge</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_13genyu" name="Approve" sourceRef="Gateway_0x1kxvl" targetRef="Activity_0gwzbb1">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">${FormField_2f9pslk=="true"}</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:serviceTask id="Activity_0gwzbb1" name="Testing Completed" implementation="##WebService" camunda:class="com.enttribe.workflow.camunda.connector.api.MilestoneConnector">
+      <bpmn2:extensionElements>
+        <camunda:field name="milestoneName">
+          <camunda:string>Testing Completed</camunda:string>
+        </camunda:field>
+        <camunda:field name="entityStage">
+          <camunda:string>In progress</camunda:string>
+        </camunda:field>
+        <camunda:field name="entityStatus">
+          <camunda:string>In progress</camunda:string>
+        </camunda:field>
+        <camunda:field name="workorderManagementStage">
+          <camunda:string>ENTITY</camunda:string>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_13genyu</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0h3w98a</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="Flow_0t1y1mk" sourceRef="Activity_07g0qea" targetRef="Activity_0z2xyoo"/>
+    <bpmn2:serviceTask id="Activity_0z2xyoo" name="On Air" implementation="##WebService" camunda:class="com.enttribe.workflow.camunda.connector.api.MilestoneConnector">
+      <bpmn2:extensionElements>
+        <camunda:field name="milestoneName">
+          <camunda:string>On Air</camunda:string>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_0t1y1mk</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1hh21er</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:endEvent id="Event_1ke3nf0">
+      <bpmn2:incoming>Flow_1hh21er</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_1hh21er" sourceRef="Activity_0z2xyoo" targetRef="Event_1ke3nf0"/>
+    <bpmn2:sequenceFlow id="Flow_0h3w98a" sourceRef="Activity_0gwzbb1" targetRef="Activity_0li45sh"/>
+    <bpmn2:sequenceFlow id="Flow_1ouzjge" sourceRef="Activity_0b34b2g" targetRef="Event_0qzc14n"/>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="LinkInstallationandConstruction293_Copy">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="-598" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1jhtlre_di" bpmnElement="Activity_1jhtlre">
+        <dc:Bounds x="-430" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1f185jv_di" bpmnElement="Flow_1f185jv">
+        <di:waypoint x="-562" y="260"/>
+        <di:waypoint x="-430" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_06zrgq0_di" bpmnElement="Activity_06zrgq0">
+        <dc:Bounds x="-170" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_08sqm7r_di" bpmnElement="Activity_08sqm7r">
+        <dc:Bounds x="10" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1gzswts_di" bpmnElement="Flow_1gzswts">
+        <di:waypoint x="-70" y="440"/>
+        <di:waypoint x="10" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0li45sh_di" bpmnElement="Activity_0li45sh">
+        <dc:Bounds x="650" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_07g0qea_di" bpmnElement="Activity_07g0qea">
+        <dc:Bounds x="820" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1qkisi4_di" bpmnElement="Flow_1qkisi4">
+        <di:waypoint x="750" y="440"/>
+        <di:waypoint x="820" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06ij2os_di" bpmnElement="Flow_06ij2os">
+        <di:waypoint x="-80" y="260"/>
+        <di:waypoint x="0" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ez3ux3_di" bpmnElement="Flow_0ez3ux3">
+        <di:waypoint x="100" y="260"/>
+        <di:waypoint x="180" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07c2pp2_di" bpmnElement="Flow_07c2pp2">
+        <di:waypoint x="280" y="260"/>
+        <di:waypoint x="350" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1l9srn0_di" bpmnElement="Flow_1l9srn0">
+        <di:waypoint x="450" y="260"/>
+        <di:waypoint x="530" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u76pro_di" bpmnElement="Flow_0u76pro">
+        <di:waypoint x="630" y="260"/>
+        <di:waypoint x="720" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1l4ve7f_di" bpmnElement="Activity_1fc6xu6">
+        <dc:Bounds x="-180" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qa5geq_di" bpmnElement="Activity_0s2iobt">
+        <dc:Bounds x="0" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ny71uc_di" bpmnElement="Activity_1xszl64">
+        <dc:Bounds x="180" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_156fi5x_di" bpmnElement="Activity_08nt3xf">
+        <dc:Bounds x="350" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1buzqdm_di" bpmnElement="Activity_1rezr83">
+        <dc:Bounds x="530" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0n8d9g5_di" bpmnElement="Activity_0b34b2g">
+        <dc:Bounds x="720" y="220" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0te0v97_di" bpmnElement="Gateway_1d67s6u">
+        <dc:Bounds x="-285" y="235" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1umyctq_di" bpmnElement="Flow_1umyctq">
+        <di:waypoint x="-330" y="260"/>
+        <di:waypoint x="-285" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y6zaqf_di" bpmnElement="Flow_1y6zaqf">
+        <di:waypoint x="-235" y="260"/>
+        <di:waypoint x="-180" y="260"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_09sjq5n_di" bpmnElement="Activity_09sjq5n">
+        <dc:Bounds x="-180" y="70" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_06i5huw_di" bpmnElement="Flow_06i5huw">
+        <di:waypoint x="-260" y="235"/>
+        <di:waypoint x="-260" y="110"/>
+        <di:waypoint x="-180" y="110"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0guisn7_di" bpmnElement="Event_0guisn7">
+        <dc:Bounds x="-8" y="92" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0885x2s_di" bpmnElement="Flow_0885x2s">
+        <di:waypoint x="-80" y="110"/>
+        <di:waypoint x="-8" y="110"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1p1noxi_di" bpmnElement="Flow_1p1noxi">
+        <di:waypoint x="-260" y="285"/>
+        <di:waypoint x="-260" y="440"/>
+        <di:waypoint x="-170" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1xhwr78_di" bpmnElement="Activity_1xhwr78">
+        <dc:Bounds x="190" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_19vdksd_di" bpmnElement="Flow_19vdksd">
+        <di:waypoint x="110" y="440"/>
+        <di:waypoint x="190" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_0x1kxvl_di" bpmnElement="Gateway_0x1kxvl" isMarkerVisible="true">
+        <dc:Bounds x="355" y="415" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_16aeopq_di" bpmnElement="Flow_16aeopq">
+        <di:waypoint x="290" y="440"/>
+        <di:waypoint x="355" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10sf0gu_di" bpmnElement="Flow_10sf0gu">
+        <di:waypoint x="380" y="465"/>
+        <di:waypoint x="380" y="560"/>
+        <di:waypoint x="60" y="560"/>
+        <di:waypoint x="60" y="480"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="205" y="542" width="32" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0qzc14n_di" bpmnElement="Event_0qzc14n">
+        <dc:Bounds x="892" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_13genyu_di" bpmnElement="Flow_13genyu">
+        <di:waypoint x="405" y="440"/>
+        <di:waypoint x="480" y="440"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="422" y="422" width="41" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1f2hfmi_di" bpmnElement="Activity_0gwzbb1">
+        <dc:Bounds x="480" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0t1y1mk_di" bpmnElement="Flow_0t1y1mk">
+        <di:waypoint x="920" y="440"/>
+        <di:waypoint x="980" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_146ouke_di" bpmnElement="Activity_0z2xyoo">
+        <dc:Bounds x="980" y="400" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ke3nf0_di" bpmnElement="Event_1ke3nf0">
+        <dc:Bounds x="1152" y="422" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1hh21er_di" bpmnElement="Flow_1hh21er">
+        <di:waypoint x="1080" y="440"/>
+        <di:waypoint x="1152" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0h3w98a_di" bpmnElement="Flow_0h3w98a">
+        <di:waypoint x="580" y="440"/>
+        <di:waypoint x="650" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ouzjge_di" bpmnElement="Flow_1ouzjge">
+        <di:waypoint x="820" y="260"/>
+        <di:waypoint x="892" y="260"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

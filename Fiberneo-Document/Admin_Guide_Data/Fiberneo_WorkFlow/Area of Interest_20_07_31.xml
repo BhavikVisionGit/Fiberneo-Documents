@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <bpmn2:process id="Process_60_490642" name="Area of Interest" processType="None" isClosed="false" isExecutable="true">
+    <bpmn2:extensionElements>
+      <camunda:properties>
+        <camunda:property name="workOrderIDPrefix" value="AOI"/>
+      </camunda:properties>
+    </bpmn2:extensionElements>
+    <bpmn2:startEvent id="StartEvent_1">
+      <bpmn2:outgoing>Flow_1tpw9z9</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:userTask id="Activity_0dkxh3o" name="AOI Survey" implementation="##unspecified" camunda:assignee="${Assignment}">
+      <bpmn2:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="FormField_2aesnug" label="FormField_2aesnug" type="string"/>
+        </camunda:formData>
+        <camunda:properties/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_0id0zq2</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_1qu1ras</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1tpw9z9" sourceRef="StartEvent_1" targetRef="Activity_16pjkjy"/>
+    <bpmn2:sequenceFlow id="Flow_0id0zq2" sourceRef="Activity_16pjkjy" targetRef="Activity_0dkxh3o"/>
+    <bpmn2:userTask id="Activity_16pjkjy" name="Assign for AOI Survey" implementation="##unspecified">
+      <bpmn2:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="Assignment" label="Assignment" type="string"/>
+        </camunda:formData>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>Flow_1tpw9z9</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0id0zq2</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_1612ee4" name="AOI Review">
+      <bpmn2:incoming>Flow_1qu1ras</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_11z15fr</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1qu1ras" sourceRef="Activity_0dkxh3o" targetRef="Activity_1612ee4"/>
+    <bpmn2:endEvent id="Event_0n9hyzs">
+      <bpmn2:incoming>Flow_11z15fr</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_11z15fr" sourceRef="Activity_1612ee4" targetRef="Event_0n9hyzs"/>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_60_490642">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="-68" y="232" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0dkxh3o_di" bpmnElement="Activity_0dkxh3o">
+        <dc:Bounds x="230" y="210" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1tpw9z9_di" bpmnElement="Flow_1tpw9z9">
+        <di:waypoint x="-32" y="250"/>
+        <di:waypoint x="40" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0id0zq2_di" bpmnElement="Flow_0id0zq2">
+        <di:waypoint x="140" y="250"/>
+        <di:waypoint x="230" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1kffp0z_di" bpmnElement="Activity_16pjkjy">
+        <dc:Bounds x="40" y="210" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1612ee4_di" bpmnElement="Activity_1612ee4">
+        <dc:Bounds x="420" y="210" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1qu1ras_di" bpmnElement="Flow_1qu1ras">
+        <di:waypoint x="330" y="250"/>
+        <di:waypoint x="420" y="250"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0n9hyzs_di" bpmnElement="Event_0n9hyzs">
+        <dc:Bounds x="612" y="232" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_11z15fr_di" bpmnElement="Flow_11z15fr">
+        <di:waypoint x="520" y="250"/>
+        <di:waypoint x="612" y="250"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

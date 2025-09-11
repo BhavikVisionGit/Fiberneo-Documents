@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd">
+  <bpmn2:process id="Process_60_986949" name="Material request and Issuance" isExecutable="true">
+    <bpmn2:extensionElements>
+      <camunda:properties>
+        <camunda:property name="workOrderIDPrefix" value="MRAI"/>
+      </camunda:properties>
+    </bpmn2:extensionElements>
+    <bpmn2:startEvent id="StartEvent_1" name="Start">
+      <bpmn2:outgoing>Flow_1nlp16d</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:userTask id="Activity_1xqcb6m" name="BOM preparation">
+      <bpmn2:incoming>Flow_1nlp16d</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0redpo3</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_1nlp16d" sourceRef="StartEvent_1" targetRef="Activity_1xqcb6m"/>
+    <bpmn2:userTask id="Activity_1aaf3iy" name="Material request">
+      <bpmn2:incoming>Flow_0redpo3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0n1ka4m</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_0redpo3" sourceRef="Activity_1xqcb6m" targetRef="Activity_1aaf3iy"/>
+    <bpmn2:userTask id="Activity_0k6myoz" name="Material acceptance">
+      <bpmn2:incoming>Flow_0n1ka4m</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_0wjpyfx</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="Flow_0n1ka4m" sourceRef="Activity_1aaf3iy" targetRef="Activity_0k6myoz"/>
+    <bpmn2:endEvent id="Event_05bcget">
+      <bpmn2:incoming>Flow_0wjpyfx</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_0wjpyfx" sourceRef="Activity_0k6myoz" targetRef="Event_05bcget"/>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_60_986949">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="412" y="240" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="418" y="283" width="24" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1xqcb6m_di" bpmnElement="Activity_1xqcb6m">
+        <dc:Bounds x="500" y="218" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1nlp16d_di" bpmnElement="Flow_1nlp16d">
+        <di:waypoint x="448" y="258"/>
+        <di:waypoint x="500" y="258"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1aaf3iy_di" bpmnElement="Activity_1aaf3iy">
+        <dc:Bounds x="660" y="218" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0redpo3_di" bpmnElement="Flow_0redpo3">
+        <di:waypoint x="600" y="258"/>
+        <di:waypoint x="660" y="258"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0k6myoz_di" bpmnElement="Activity_0k6myoz">
+        <dc:Bounds x="820" y="218" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0n1ka4m_di" bpmnElement="Flow_0n1ka4m">
+        <di:waypoint x="760" y="258"/>
+        <di:waypoint x="820" y="258"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_05bcget_di" bpmnElement="Event_05bcget">
+        <dc:Bounds x="982" y="240" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0wjpyfx_di" bpmnElement="Flow_0wjpyfx">
+        <di:waypoint x="920" y="258"/>
+        <di:waypoint x="982" y="258"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

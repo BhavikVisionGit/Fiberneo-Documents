@@ -1,179 +1,165 @@
-# Fiber-Model Service Deployment Guide
-
-## Overview
-This guide provides step-by-step instructions for deploying the Fiber-Model Service using Helm charts on Kubernetes. The fiber-model service is a Spring Boot application that handles fiber-model-related operations and integrates with various VisionWaves platform services.
+# Fiber-Model Platform Deployment Guide
 
 ## 📋 Table of Contents
-
 1. [Prerequisites](#prerequisites)
 2. [Service Dependencies](#service-dependencies)
-3. [Deployment Steps](#deployment-steps)
+   - [Backend Dependencies](#backend-dependencies)
+   - [UI Dependencies](#ui-dependencies)
+3. [Backend Deployment](#backend-deployment)
    - [Step 1: Repository Setup](#step-1-repository-setup)
    - [Step 2: Database Setup](#step-2-database-setup)
-   - [Step 3: Secret Manager Configuration](#step-3-secret-manager-configuration)
+   - [Step 3: Secret Manager Configuration (Vault)](#step-3-secret-manager-configuration-vault)
    - [Step 4: Configure Secret Provider Service Account](#step-4-configure-secret-provider-service-account)
    - [Step 5: Helm Chart Configuration](#step-5-helm-chart-configuration)
-   - [Step 6: Deploy Service](#step-6-deploy-service)
-4. [Service Configuration](#service-configuration)
-   - [Dependencies Configuration](#dependencies-configuration)
-   - [Templates Overview](#templates-overview)
+   - [Step 6: Deploy Backend Service](#step-6-deploy-backend-service)
+4. [UI Deployment](#ui-deployment)
+   - [Step 1: Repository Setup](#ui-step-1-repository-setup)
+   - [Step 2: Helm Chart Configuration](#ui-step-2-helm-chart-configuration)
+   - [Step 3: Deploy UI Service](#ui-step-3-deploy-ui-service)
 5. [Verification](#verification)
+   - [Backend Verification](#backend-verification)
+   - [UI Verification](#ui-verification)
 6. [Troubleshooting](#troubleshooting)
-7. [Post-Deployment](#post-deployment)
-8. [Additional notes](#additional-notes)
+   - [Backend](#backend-troubleshooting)
+   - [UI](#ui-troubleshooting)
+   - [Monitoring & Performance](#monitoring--performance)
+7. [Useful Commands](#useful-commands)
+8. [Rollback](#rollback)
+9. [Additional Notes](#additional-notes)
+
+---
+
+## Overview
+This guide consolidates deployment steps for both the Fiber-Model Backend (Spring Boot service) and the Fiber-Model UI (Nginx-based frontend) using Helm on Kubernetes. It covers prerequisites, dependencies, configuration, deployment, verification, troubleshooting, and rollback.
+
+---
 
 ## Prerequisites
 
-Before deploying the fiber-model service, ensure the following prerequisites are met:
+Before deploying, ensure the following prerequisites are met:
 
 - ✅ **Kubernetes Cluster** is running and accessible
-- ✅ **Helm** is installed and configured (v3.x)
+- ✅ **Helm v3** is installed and configured
 - ✅ **Docker Registry** is accessible
-- ✅ **Vault Secret Manager** is configured
-- ✅ **Crypto.zip** is available for decryption
-- ✅ **Namespace 'ansible'** is created
-- ✅ **Required Dependencies** are deployed (see Service Dependencies section)
+- ✅ **Namespace `ansible`** exists
+- ✅ Backend: **Vault Secret Manager** is configured; **Crypto.zip** is available
+- ✅ UI: **Istio Gateway** is configured (for VirtualService)
+
+---
 
 ## Service Dependencies
 
-The fiber-model service depends on the following services that must be deployed first:
+### Backend Dependencies
+- Phase 1: Core Infrastructure (Required First)
+  1. **apigw** – API Gateway
+  2. **keycloak** – Identity and Access Management
+  3. **base-utility** – Core utility services
+- Phase 2: Data & Cache Layer (Required Second)
+  4. **redis-stack-server** – Caching / session
+  5. **onesearch** – Search infrastructure (Global Search)
+  6. **cassandra** – Cassandra database
 
-### **Phase 1: Core Infrastructure (Required First)**
-1. **apigw** - API Gateway
-2. **keycloak** - Identity and Access Management
-3. **base-utility** - Core utility services
+### UI Dependencies
+- Phase 1: Core Infrastructure (Required First)
+  1. **keycloak** – Identity and Access Management
+  2. **core-ui-shell** – UI shell
+  3. **ui-designer** – Configuration (e.g., `main.js`)
 
-### **Phase 2: Data & Cache Layer (Required Second)**
-4. **redis-stack-server** - Caching and session management
-5. **onesearch** - Search engine infrastructure (Global Search)
-6. **cassandra** - Cassandra database
+---
 
-## Deployment Steps
+## Backend Deployment
 
 ### Step 1: Repository Setup
-
 ```bash
-# Clone the repository (if not already done)
+# Clone and navigate to backend chart
 git clone <your-repo-name>
 cd <your-repo-name>
-
-# Navigate to fiber-model service directory
 cd fiber-model/Backend
 
-# Verify directory structure
-ls
-# Expected output: Chart.yaml  config/  templates/  values.yaml
-
-# Verify Helm chart structure
-ls templates/
-# Expected output: configmap.yaml  deployment.yaml  hpa.yaml  service.yaml  serviceaccount.yaml  NOTES.txt  _helpers.tpl
+# Verify chart structure
+ls            # Chart.yaml  config/  templates/  values.yaml
+ls templates/ # configmap.yaml  deployment.yaml  hpa.yaml  service.yaml  serviceaccount.yaml  NOTES.txt  _helpers.tpl
 ```
 
 ### Step 2: Database Setup
-
 ```bash
-# Backup existing DB (optional)
+# Optional: Backup existing DB
 # mysqldump -u '' -p '' FIBER_MODEL > /path/to/FIBER_MODEL_BACKUP.sql
 
-# 1. Get database dump or source file from the below path
+# 1) Obtain DB SQL from
 # https://github.com/visionwaves/visionwaves-deployment/tree/dev/fiber-model/sql
+# Download: FIBER_MODEL_WITH_DATA.sql or FIBER_MODEL_WITHOUT_DATA.sql
 
-# 2. Download FIBER_MODEL_WITH_DATA.sql or FIBER_MODEL_WITHOUT_DATA.sql
-
-# 3. Access mysql cluster in generated-app-db namespace using its admin mysql user
+# 2) Connect to mysql (generated-app-db namespace admin user)
 mysql -h <mysql-host> -P 3306 -u <username> -p
 
-# 4. Create a database (if it does not already exist)
+# 3) Create DB if needed
 CREATE DATABASE IF NOT EXISTS FIBER_MODEL;
 
-# 👉 If database already exists and you want a clean setup:
-# DROP DATABASE FIBER_MODEL;
-# CREATE DATABASE FIBER_MODEL;
+# For clean setup:
+# DROP DATABASE FIBER_MODEL; CREATE DATABASE FIBER_MODEL;
 
-# 5. Use the FIBER_MODEL database and source the downloaded file
+# 4) Use DB and source dump
 USE FIBER_MODEL;
-SOURCE /path/to/yourfolder/FIBER_MODEL_WITHOUT_DATA.sql;
+SOURCE /absolute/path/FIBER_MODEL_WITHOUT_DATA.sql;
 
-# ⚠️ Troubleshooting:
-# - If "ERROR 1049 (42000): Unknown database" → run `USE FIBER_MODEL;` first
-# - If "ERROR 1064 (42000)" → check the SQL file path (use absolute path)
-# - If permissions error → ensure you are logged in as admin user
-# - If SOURCE still fails, run from shell instead of MySQL prompt:
-#   mysql -u '' -p'' FIBER_MODEL < /path/to/FIBER_MODEL_WITHOUT_DATA.sql
+# Troubleshooting
+# - 1049 Unknown database → run: USE FIBER_MODEL;
+# - 1064 syntax error → verify SQL file path and content
+# - Permissions → ensure admin user
+# - Alternative (shell):
+#   mysql -u '' -p'' FIBER_MODEL < /absolute/path/FIBER_MODEL_WITHOUT_DATA.sql
 ```
 
-### Step 3: Secret Manager Configuration
-
-**Vault Secret Manager Configuration:**
-
-1. Get svc of vault from vault namespace and make port forward to 8200 for accessing the vault UI
-2. Login with the username and token from the vault secret manager
-3. **Create secret in Vault Secret Manager with name: `fiber-model`** (i.e: kv/data/fiber-model (path of keyvalue of secret manager)) if exists then leave it as it is just check the secret value and update the values
-
-4. **⚠️ Important: Decrypt and update these values before creating the secret:**
-
-**First, setup the crypto environment:**
-```bash
-# Unzip the Crypto.zip file
-unzip Crypto.zip
-cd Crypto/
-
-# Export the E_C value from the secrets
-export E_C="tso*****sWM=" # Your E_C valid key value
-```
-
-**Decrypt and update required values:**
-
-1. **Database Configuration**:
-   ```bash
-   # encodeco.sh usage
-   # Encrypt: ./encodeco.sh e "VALUE_TO_BE_ENCRYPTED"
-   # Decrypt: ./encodeco.sh d "ENCODED_VALUE"
-   
-   # Encrypt MYSQL_URL and IP address
-   ./encodeco.sh e "jdbc:mysql://<MYSQL_HOST>:3306/FIBER_MODEL?useSSL=true"
-   
-   # Encrypt database credentials
-   ./encodeco.sh e "your_db_username"
-   ./encodeco.sh e "your_db_password"
-   ```
-
-2. **Cassandra Configuration**:
-   ```bash
-
-   ### ./encodeco.sh e 'This values Decrypt with E_C'
-
-    commons.cassandra.keyspaceName=wCW+20A********fNtHcw==
-    commons.cassandra.localDataCenter=kaydO*****PuEOFBmDw==
-    commons.cassandra.password=ricl9hm*******2q0KfGgsg==
-    commons.cassandra.username=ricl9hm******q0KfGgsg==
-    commons.cassandra.contactPoints=LctQlVrPAaNvNh4weC******/GuGX5o0NI34Ut01RVgAV4wX2sllpQBzw==
-    commons.cassandra.port=9042
-    commons.cassandra.request-timeout=5
-   ```
-
-5. **Create the secret with the following values:**
+### Step 3: Secret Manager Configuration (Vault)
+1. Port-forward Vault UI (namespace: `vault`) to local 8200 and log in.
+2. Create or verify secret `kv/data/fiber-model` with required keys; update values as needed.
+3. Prepare crypto environment and encrypt sensitive values.
 
 ```bash
-# This is key used for encryption and decryption
-export E_C="tso********sWM="
+# Unzip Crypto bundle
+unzip Crypto.zip && cd Crypto/
 
-# Values for DB credentials
-export db_pass="o7B1*********bR8Q=="
-export db_url="ALhMsWbbR***********ycA=="
-export db_user="bIpW***********=="
+# Export E_C (decryption key)
+export E_C="<your_E_C_value>"
+
+# encodeco.sh usage
+# Encrypt: ./encodeco.sh e "VALUE"
+# Decrypt: ./encodeco.sh d "ENCODED_VALUE"
+
+# Examples
+./encodeco.sh e "jdbc:mysql://<MYSQL_HOST>:3306/FIBER_MODEL?useSSL=true"
+./encodeco.sh e "your_db_username"
+./encodeco.sh e "your_db_password"
 ```
 
-6. **It creates a new secret and its role (fiber-model-role) and ACL policy and check service account (fiber-model-sa) is configured properly**
+Cassandra encrypted keys (example keys expected in Vault):
+```bash
+commons.cassandra.keyspaceName=<encrypted>
+commons.cassandra.localDataCenter=<encrypted>
+commons.cassandra.password=<encrypted>
+commons.cassandra.username=<encrypted>
+commons.cassandra.contactPoints=<encrypted>
+commons.cassandra.port=9042
+commons.cassandra.request-timeout=5
+```
+
+Exported values example (final values stored in Vault):
+```bash
+export E_C="<encrypted_key>"
+export db_pass="<encrypted>"
+export db_url="<encrypted>"
+export db_user="<encrypted>"
+```
+
+Ensure creating the Vault role `fiber-model-role`, ACL policy, and service account `fiber-model-sa` as required.
 
 ### Step 4: Configure Secret Provider Service Account
-
-```bash
-# 1. Go to the helm chart folder where values.yaml exists
-# 2. Update the following values in the values.yaml file:
-
+Update chart values and templates to use the service account and inject secrets:
+```yaml
+# values.yaml
 serviceAccount:
-  create: false  # if already created else true
+  create: false  # true if creating new
   annotations: {}
   name: fiber-model-sa
 
@@ -194,58 +180,40 @@ podAnnotations:
     {{- "\n" -}}
     {{- end }}
     {{- end }}
-
-# 3. Check the following values in deployment.yaml file as service account name is mentioned in the values.yaml file or default service account is used:
-spec:
-  serviceAccountName: {{ if .Values.serviceAccount.create }}{{ .Values.serviceAccount.name }}{{ else }}fiber-model-sa{{ end }}
-
-# 4. Apply the above file changes
 ```
 
-### Step 5: Helm Chart Configuration
-
-The fiber-model service Helm chart includes the following components:
-
-#### **Chart.yaml**
-- **Name:** fiber-model-service
-- **Version:** 0.1.0
-- **Type:** application
-
-#### **values.yaml Key Configuration**
-
+Verify `deployment.yaml` uses the service account:
 ```yaml
-# Replica Configuration
+spec:
+  serviceAccountName: {{ if .Values.serviceAccount.create }}{{ .Values.serviceAccount.name }}{{ else }}fiber-model-sa{{ end }}
+```
+
+Apply file changes.
+
+### Step 5: Helm Chart Configuration
+Key values overview:
+```yaml
 replicaCount: 1
-
-# Image Configuration
 image:
-  repository: registry.visionwaves.com/{Name According to You for Example: fiber-model-demo}
-  tag: tag according to you for Example: v1.0.1
+  repository: registry.visionwaves.com/<your-fiber-model-image>
+  tag: <your-tag>
   pullPolicy: IfNotPresent
-
-# Service Configuration
 service:
   port: 80
   targetPort: 8081
   type: ClusterIP
-
-# Resource Limits
 resourcesLimits:
   cpu: 500m
   memory: 2Gi
 requestsResources:
   cpu: 500m
   memory: 2Gi
-
-# Autoscaling
 autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 75
   targetMemoryUtilizationPercentage: 75
-
-# Health Checks
 livenessProbe:
   enable: true
   path: /fiber-model/rest/ping
@@ -253,236 +221,274 @@ livenessProbe:
   periodSeconds: 20
   failureThreshold: 3
   timeoutSeconds: 3
-
 readinessProbe:
   path: /fiber-model/rest/ping
   initialDelaySeconds: 60
   periodSeconds: 10
   timeoutSeconds: 3
-
-# Environment Variables
 env:
   servicePort: 8081
   serviceContext: /fiber-model
   PORT: '8081'
   deploymentName: fiber-model-service
-  # ... other environment variables
-  # Update this according to the requirement
 ```
 
-### Step 6: Deploy Service
-
+### Step 6: Deploy Backend Service
 ```bash
-# Verify current directory
-pwd
-# Should be: /path/to/visionwaves-deployment/fiber-model/Backend
+# Verify location
+pwd  # /path/to/visionwaves-deployment/fiber-model/Backend
 
-# Get service name from Chart.yaml
-cat Chart.yaml
-# Look for 'name' field
-
-# Review image configuration in values.yaml
+# Inspect chart name and image values
+cat Chart.yaml | grep -i name
 grep -A 5 "image:" values.yaml
-# Look for the image section like:
-# image:
-#   repository: registry.visionwaves.com/fiber-model
-#   tag: v1_service
-#   pullPolicy: IfNotPresent
 
-# Deploy service using Helm with image override (include tag)
-# Note: Change the image repository and tag according to the image pushed in your registry
-helm upgrade <service-name> -n ansible . --set image.repository=registry.visionwaves.com/fiber-model --set image.tag=v1_service
-
-# Alternative: Deploy with custom image if needed
-# helm upgrade fiber-model-service -n ansible . \
-#   --set image.repository=your-registry.com/fiber-model \
-#   --set image.tag=your-tag
+# Deploy/upgrade with image override
+helm upgrade <service-name> -n ansible . \
+  --install \
+  --set image.repository=registry.visionwaves.com/fiber-model \
+  --set image.tag=v1_service
 ```
 
-## Service Configuration
+---
 
-### **Dependencies Configuration**
+## UI Deployment
 
-The service connects to:
+### Step 1: Repository Setup
+```bash
+git clone <your-repo-name>
+cd <your-repo-name>
+cd fiber-model/ui/fiber-model
 
-- **Database**: MariaDB/MySQL (encrypted connection)
-- **Redis**: For caching and session management
-- **Vault**: For secret management
-- **APM**: For application monitoring
+# Verify chart structure
+ls            # Chart.yaml  configmapfiles/  templates/  values.yaml
+ls templates/ # confimap.yaml  deployment.yaml  hpa.yaml  service.yaml  virtualService.yaml  NOTES.txt  _helpers.tpl
+ls configmapfiles/ # nginx.conf
+```
 
-#### **Templates Overview**
+### Step 2: Helm Chart Configuration
+```yaml
+replicaCount: 1
+image:
+  repository: registry.visionwaves.com/fiber-model-ui
+  tag: fiber-model-demo-17_v15_ui_demo
+  pullPolicy: Always
+service:
+  type: ClusterIP
+  name: fiber-model-ui
+  port: 80
+  targetPort: 8081
+resourcesLimits:
+  cpu: 100m
+  memory: 200M
+requestsResources:
+  cpu: 10m
+  memory: 100M
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+livenessProbe:
+  path: /nginx_status
+  initialDelaySeconds: 80
+  periodSeconds: 20
+  failureThreshold: 3
+readinessProbe:
+  path: /nginx_status
+  initialDelaySeconds: 30
+  periodSeconds: 10
+virtualService:
+  enabled: true
+  context: /fiber-model
+  rewriteForSlash: false
+gateway:
+  enabled: true
+  name: ingressgateway
+gatewayServers:
+  portNumber: 80
+  portName: http
+  portProtocol: HTTP
+  hosts: '"*"'
+configMap:
+  createIndexhtmlConfigmap: false
+  createkeycloakContextConfigmap: false
+  createNginxconfConfigmap: true
+  defaultMode: '0755'
+exporter:
+  enable: false
+  name: nginx-exporter
+  image:
+    repository: nginx/nginx-prometheus-exporter
+    pullPolicy: Always
+    tag: 0.10.0
+  env:
+    SCRAPE_URI: http://localhost:8081/nginx_status
+    NGINX_RETRIES: '10'
+    TELEMETRY_PATH: /metrics
+```
 
-1. **deployment.yaml** - Main application deployment with sidecar container
-2. **service.yaml** - Kubernetes service for internal communication
-3. **hpa.yaml** - Horizontal Pod Autoscaler for scaling
-4. **configmap.yaml** - Configuration files (application.properties, scripts)
-5. **serviceaccount.yaml** - Service account for workload identity
-6. **NOTES.txt** - Post-deployment instructions
+### Step 3: Deploy UI Service
+```bash
+# Verify location
+pwd  # /path/to/visionwaves-deployment/fiber-model/ui/fiber-model
+
+# Inspect chart name and image values
+cat Chart.yaml | grep -i name
+grep -A 5 "image:" values.yaml
+
+# Deploy/upgrade
+helm upgrade fiber-model-ui -n ansible . --install
+```
+
+---
 
 ## Verification
 
-### **1. Check Pod Status**
+### Backend Verification
 ```bash
+# Pods
 kubectl get pods -n ansible | grep fiber-model
-# Expected: Running status (should be like this running 3/3 or 4/4 depending on number of replicas)
-```
-
-### **2. Check Service Status**
-```bash
+# Services
 kubectl get svc -n ansible | grep fiber-model
-# Expected: ClusterIP service on port 80
-```
 
-### **3. Check Health Endpoint**
-```bash
-# Port forward to test locally
+# Health endpoint
 kubectl port-forward -n ansible svc/fiber-model-service 8081:80
+curl http://localhost:8081/fiber-model/rest/ping  # Expect 200
 
-# Test health endpoint
-curl http://localhost:8081/fiber-model/rest/ping
-# Expected: 200 OK response
-```
-
-### **4. Check Logs**
-```bash
-# Check if service started successfully or not
+# Logs
+kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service --tail=100
 kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service --tail=100 | grep "service started successfully"
 
-kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service --tail=100
-# Check for any startup errors or connection issues
+# HPA
+kubectl get hpa -n ansible fiber-model-service
 ```
 
-### **5. Check HPA Status**
+### UI Verification
 ```bash
-kubectl get hpa -n ansible fiber-model-service
-# Expected: HPA configured with CPU/Memory targets
-# NAME                  REFERENCE                        TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
-# fiber-model-service   Deployment/fiber-model-service   <unknown>/75%, <unknown>/75%   1         3         1          1day
+# Pods
+kubectl get pods -n ansible | grep fiber-model-ui
+# Services
+kubectl get svc -n ansible | grep fiber-model-ui
+# VirtualService
+kubectl get virtualservice -n ansible | grep fiber-model-ui
+
+# Health and app content
+kubectl port-forward -n ansible svc/fiber-model-ui 8081:80
+curl http://localhost:8081/nginx_status   # Expect 200
+curl http://localhost:8081/               # Expect UI HTML
 ```
+
+---
 
 ## Troubleshooting
- 
-### **Common Issues**
- 
-#### 1. Pod Not Starting
+
+### Backend
 ```bash
-# Check pod status
+# Pod not starting
 kubectl describe pod -n ansible -l app.kubernetes.io/name=fiber-model-service
- 
-# Check logs
 kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service --previous
-```
- 
-#### 2. Database Connection Issues
-```bash
-# Verify database credentials in secret
+
+# DB connection issues
 kubectl get secret -n ansible fiber-model -o yaml
- 
-# Check database connectivity from pod
 kubectl exec -n ansible -it deployment/fiber-model-service -- env | grep -E "(MYSQL|DB_)"
-```
-  
-#### 3. Secret Access Issues
-```bash
-# Verify secret provider class
+
+# Secret access issues
 kubectl get secretproviderclass -n ansible
- 
-# Check service account binding
 kubectl describe serviceaccount -n ansible fiber-model-sa
 ```
- 
-### Log Analysis
- 
+
+### UI
 ```bash
-# Application logs
-kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service -f
- 
-# Sidecar logs
-kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service -c melody-service -f
- 
-# All logs with timestamps
-kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-service --timestamps
+# Pod not starting
+kubectl describe pod -n ansible -l app.kubernetes.io/name=fiber-model-ui
+kubectl logs -n ansible -l app.kubernetes.io/name=fiber-model-ui --previous
+
+# Nginx config issues
+kubectl get configmap -n ansible fiber-model-ui-cm -o yaml
+kubectl exec -n ansible -it deployment/fiber-model-ui -- cat /etc/nginx/nginx.conf
+
+# VirtualService issues
+kubectl describe virtualservice -n ansible fiber-model-ui
+kubectl get gateway -n ansible
 ```
- 
-### Performance Monitoring
- 
+
+### Monitoring & Performance
 ```bash
-# Check resource usage
-kubectl top pods -n ansible | grep fiber-model
- 
-# Check HPA status
-kubectl get hpa -n ansible | grep fiber-model
- 
-# Check metrics
+# Resource usage
+kubectl top pods -n ansible | grep -E "fiber-model|fiber-model-ui"
+
+# HPA
+kubectl get hpa -n ansible | grep -E "fiber-model|fiber-model-ui"
+
+# Metrics API
 kubectl get --raw /apis/metrics.k8s.io/v1beta1/pods | jq '.items[] | select(.metadata.name | contains("fiber-model"))'
 ```
- 
- 
-### 2. Configure Monitoring
-The service includes Prometheus metrics at `/fiber-model/actuator/prometheus`. Ensure your monitoring system is configured to scrape these metrics.
- 
-### 3. Backup Configuration
+
+---
+
+## Useful Commands
 ```bash
-# Backup current configuration
-kubectl get configmap -n ansible fiber-model-service-conf -o yaml > fiber-model-config-backup.yaml
- 
-# Backup values
-helm get values fiber-model-service -n ansible > fiber-model-values-backup.yaml
-```
- 
-### **Useful Commands**
- 
-```bash
-# Check pod events
+# Pod events
 kubectl describe pod -n ansible -l app.kubernetes.io/name=fiber-model-service
- 
-# Check secret provider status
+kubectl describe pod -n ansible -l app.kubernetes.io/name=fiber-model-ui
+
+# Secret provider status (Backend)
 kubectl get secretproviderclass -n ansible
- 
-# Check service account
+
+# Service accounts
 kubectl get sa -n ansible fiber-model-sa
- 
-# Check configmap
+
+# ConfigMaps
 kubectl get configmap -n ansible fiber-model-service-conf
- 
-# View application properties
 kubectl get configmap -n ansible fiber-model-service-conf -o yaml
- 
- 
- 
-#After deployment if need to restart the pods or update the service URLs in the application.properties if needed:
-# Edit the configmap and save so that pod will be restarted with the new image if chnaged.
-kubectl edit configmap -n ansible fiber-model-service-conf
- 
-# Restart the deployment to apply changes
+kubectl get configmap -n ansible fiber-model-ui-cm
+kubectl get configmap -n ansible fiber-model-ui-cm -o yaml
+
+# Restart deployments after config changes
 kubectl rollout restart deployment/fiber-model-service -n ansible
+kubectl rollout restart deployment/fiber-model-ui -n ansible
+
+# Backups
+kubectl get configmap -n ansible fiber-model-service-conf -o yaml > fiber-model-config-backup.yaml
+helm get values fiber-model-service -n ansible > fiber-model-values-backup.yaml
+kubectl get configmap -n ansible fiber-model-ui-cm -o yaml > fiber-model-ui-config-backup.yaml
+helm get values fiber-model-ui -n ansible > fiber-model-ui-values-backup.yaml
+
+# Local URL via port-forward (UI)
+export POD_NAME=$(kubectl get pods --namespace ansible -l "app.kubernetes.io/name=fiber-model-ui,app.kubernetes.io/instance=fiber-model-ui" -o jsonpath="{.items[0].metadata.name}")
+echo "Visit http://127.0.0.1:8080 to use your application"
+kubectl --namespace ansible port-forward $POD_NAME 8080:80
 ```
- 
-### **Rollback Instructions**
- 
+
+---
+
+## Rollback
 ```bash
 # List releases
 helm list -n ansible
- 
-# Rollback to previous version
+
+# Backend rollback
 helm rollback fiber-model-service -n ansible
- 
-# Or uninstall and reinstall
+# UI rollback
+helm rollback fiber-model-ui -n ansible
+
+# Uninstall and reinstall (if needed)
 helm uninstall fiber-model-service -n ansible
 helm upgrade fiber-model-service -n ansible .
+
+helm uninstall fiber-model-ui -n ansible
+helm upgrade fiber-model-ui -n ansible . --install
 ```
- 
----
- 
-## Additional Notes
- 
-- The service includes a sidecar container for APM monitoring (melody-service)
-- Vault integration is configured for secret injection
-- The service supports horizontal pod autoscaling based on CPU and memory usage
-- All database connections are encrypted and use SSL certificates
-- The service is configured for production use with proper resource limits and health checks
- 
-For any issues or questions, refer to the application logs and check the dependency services status.
+
 ---
 
-**Note:** This deployment guide assumes you have the necessary permissions and access to Vault services, Kubernetes cluster, and the required dependencies. Always test in a non-production environment first.
+## Additional Notes
+- The Backend service includes a sidecar for APM monitoring (`melody-service`).
+- Vault integration is used for secret injection (Backend).
+- Backend exposes Prometheus metrics at `/fiber-model/actuator/prometheus`.
+- UI uses Nginx with Brotli; optional nginx-exporter for metrics at `/metrics`.
+- UI routes via Istio VirtualService; context is `/fiber-model`.
+- Both services support HPA (Backend enabled by default in example; UI disabled by default).
+- Database connections are encrypted and use SSL certificates (Backend).
+- For production, review and adjust resource requests/limits and health checks.

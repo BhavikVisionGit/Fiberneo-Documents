@@ -1,3 +1,55 @@
+# Fiberneo Service - Low Level Design (LLD)
+
+## Table of Contents
+
+1. [Introduction](#1-introduction)
+   - 1.1 [Objective and Scope](#11-objective-and-scope)
+
+2. [Solution Design](#2-solution-design)
+   - 2.1 [Architecture Diagram](#21-architecture-diagram)
+   - 2.2 [Component Diagram](#22-component-diagram)
+   - 2.3 [Application Flow - Sequence Diagrams](#23-application-flow---sequence-diagrams)
+     - 2.3.1 [Entity Creation Flow](#231-entity-creation-flow)
+     - 2.3.2 [Project Stage Transition Flow](#232-project-stage-transition-flow)
+     - 2.3.3 [Construction and Testing Flow](#233-construction-and-testing-flow)
+     - 2.3.4 [Handover (HOTO) and Ready for Service Flow](#234-handover-hoto-and-ready-for-service-flow)
+
+3. [Solution Features and User Interface](#3-solution-features-and-user-interface)
+   - 3.1 [Area/Link/Site Management](#area-link-site-management)
+   - 3.2 [Survey and Planning](#survey-and-planning)
+   - 3.3 [Construction and Testing](#construction-and-testing)
+   - 3.4 [Splicing and Ports](#splicing--port-management-ui)
+
+4. [Integration Details](#4-integration-details)
+
+5. [Database Schema Design](#5-database-schema-design)
+   - 5.1 [ER Diagram - Module-wise](#51-er-diagram-and-module-wise-tables-40-tables)
+     - 5.1.1 [Project & Survey Module](#a-project--survey)
+     - 5.1.2 [Network Model Module](#b-network-model)
+     - 5.1.3 [Workflow & Status Module](#d-workflow--status)
+     - 5.1.4 [Import/Export & GIS Support](#f-importexport)
+   - 5.2 [CDC Configuration](#52-cdc-configuration)
+
+6. [API Details](#6-api-details)
+
+7. [RBAC & ABAC](#7-rbac--abac)
+   - 7.1 [Permission Groups](#71-permission-groups)
+   - 7.2 [Profile Template](#72-profile-template)
+
+8. [Monitoring & Alerting](#8-monitoring--alerting)
+
+9. [Performance and Scaling](#9-performance-and-scaling)
+
+10. [Operation Runbook](#10-operation-runbook)
+    - 10.1 [Common Issues & Debugging](#101-common-issues--debugging)
+    - 10.2 [Performance Tuning Guide](#102-performance-tuning-guide)
+
+11. [Appendices](#11-appendices)
+    - 11.1 [Technology Stack](#111-technology-stack)
+    - 11.2 [Database Schema Statistics](#112-database-schema-statistics)
+    - 11.3 [API Statistics](#113-api-statistics)
+    - 11.4 [Security Features](#114-security-features)
+
 ## 1. Introduction
 
 ### 1.1 Objective and Scope
@@ -73,68 +125,66 @@ graph TD
 ### 2.2 Component Diagram
 
 ```mermaid
-flowchart LR
-  %% Clients and Gateway
+flowchart TD
+  %% Clients
   subgraph Clients
-    Web[Web UI]
-    Mobile[Mobile App]
+    direction TB
+    Web["💻 Web UI"]
+    Mobile["📱 Mobile App"]
   end
-  subgraph Gateway[API Gateway / Swagger UI]
-    Auth[AuthN/Z, Routing, Rate Limit]
+
+  %% Gateway
+  subgraph Gateway["API Gateway / Swagger UI"]
+    Auth["AuthN/Z, Routing, Rate Limit"]
   end
   Web --> Auth
   Mobile --> Auth
 
-  %% Backend modules (multi-module project)
-  subgraph Backend[fiberneo Backend]
-    direction LR
+  %% Backend (stacked vertically)
+  subgraph Backend["Fiberneo Backend (multi-module)"]
+    direction TB
 
-    %% API module
-    subgraph API[fiberneo-api]
-      direction TB
-      Ctrls[REST Controllers]
-      DTO[DTO Models & Validation]
-      Feign[Feign/HTTP Clients]
+    subgraph API["fiberneo-api"]
+      Ctrls["REST Controllers"]
+      DTO["DTO Models & Validation"]
+      Feign["Feign Clients"]
     end
 
-    %% App module (bootstrapping)
-    subgraph APP[fiberneo-app]
-      direction TB
-      Boot[Spring Boot App]
-      Config[App Config/Profiles]
-      Sched[Jobs/Schedulers]
+    subgraph APP["fiberneo-app"]
+      Boot["Spring Boot App"]
+      Config["Profiles & Config"]
+      Sched["Jobs/Schedulers"]
     end
 
-    %% Service module (domain + persistence)
-    subgraph SVC[fiberneo-service]
-      direction TB
-      BL[Business Services]
-      Dom[Domain Models]
-      Repo[JPA Repositories]
-      Intg[Integrations & Adapters]
-      Outbox[Outbox/CDC Publisher]
+    subgraph SVC["fiberneo-service"]
+      BL["Business Services"]
+      Dom["Domain Models"]
+      Repo["JPA Repositories"]
+      Intg["Integrations & Adapters"]
+      Outbox["Outbox / CDC Publisher"]
     end
   end
 
+  %% Flow inside backend
   Auth --> Ctrls
+  DTO --> Ctrls
   APP --> Ctrls
   Ctrls --> BL
-  DTO --> Ctrls
   BL --> Dom
   BL --> Repo
   BL --> Intg
   Intg --> Feign
 
-  %% Functional domains within Business Services
-  subgraph Domains[Managed Components]
+  %% Functional Domains (VERTICAL)
+  subgraph Domains["Managed Components"]
     direction TB
-    Area[Area/Link/Site Modules]
-    Survey[Survey & Planning]
-    Constr[Construction & Testing]
-    Splice[Splicing / Ports / Strands]
-    Inv[Inventory View (read-only)]
-    ExpImp[Export / Import]
-    CDC[Data Sync / CDC]
+    Area["📍 Area / Link / Site"]
+    Survey["📝 Survey & Planning"]
+    Constr["🏗️ Construction & Testing"]
+    Splice["🔌 Splicing / Ports / Strands"]
+    Inv["📦 Inventory View"]
+    ExpImp["⬆️⬇️ Export / Import"]
+    CDC["🔄 Data Sync / CDC"]
   end
   BL --> Area
   BL --> Survey
@@ -145,14 +195,14 @@ flowchart LR
   BL --> CDC
   CDC --> Outbox
 
-  %% Data and infrastructure
-  subgraph Data[Infra & Data Stores]
+  %% Data Stores & Infra
+  subgraph Data["Infra & Data Stores"]
     direction TB
-    DB[(PostgreSQL / PostGIS)]
-    Cache[(Redis)]
-    MQ[[Kafka]]
-    Obj[(Object Storage)]
-    DWH[(Data Lake/Warehouse)]
+    DB[("🗄️ PostgreSQL / PostGIS")]
+    Cache[("⚡ Redis")]
+    MQ[["📨 Kafka"]]
+    Obj[("🗂️ Object Storage")]
+    DWH[("📊 Data Lake / Warehouse")]
   end
   Repo --> DB
   BL --> Cache
@@ -160,24 +210,27 @@ flowchart LR
   Outbox --> MQ
   MQ --> DWH
 
-  %% External services
-  subgraph External[External Systems]
+  %% External Systems (VERTICAL)
+  subgraph External["External Services"]
     direction TB
-    PRJ[Project/Workflow Service]
-    MAT[Material Mgmt/ERP]
-    VEND[Vendor APIs]
-    NOTIF[Notification Service]
+    PRJ["📂 Project/Workflow Service"]
+    MAT["🏭 Material Mgmt / ERP"]
+    VEND["🌐 Vendor APIs"]
+    NOTIF["🔔 Notification Service"]
   end
   Intg <--> PRJ
   Intg <--> MAT
   Intg <--> VEND
   BL --> NOTIF
+
 ```
 
 Component interactions:
 - API Layer exposes REST. Business Services enforce rules, call repositories, publish Kafka events, and call Feign clients toward external services. CDC tailing via Debezium streams to DWH.
 
 ### 2.3 Application Flow - Sequence Diagrams
+
+#### 2.3.1 Entity Creation Flow
 
 #### Create Area, Link and Site on UI on Map
 
@@ -202,6 +255,8 @@ sequenceDiagram
   API-->>GW: 201 Created
   GW-->>UI: Render entity on map
 ```
+
+#### 2.3.2 Project Stage Transition Flow
 
 #### Project Flows (high-level)
 
@@ -312,6 +367,8 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
+#### 2.3.3 Construction and Testing Flow
+
 ### Area Installation and Construction
 
 ```mermaid
@@ -372,6 +429,8 @@ sequenceDiagram
   GW->>PG: Route
   PG->>BD: Associate Form or Task
 ```
+
+#### 2.3.4 Handover (HOTO) and Ready for Service Flow
 
 ### FiberLink HOTO
 
@@ -702,21 +761,6 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-#### Specific Project Flows (Area/Link/Site)
-
-Use the following as canonical workflows; each transition updates `project_stage`, emits `stage.changed` event, and may call Other Service.
-
-- **Area Planning Survey / Link Planning Survey**: Planning -> Review planning -> Ready for survey -> Assign For Survey -> Perform Survey -> Review Survey -> Survey completed -> Perform Detail Design -> Design Review -> Design Completed -> Generate BOM -> BOQ/BOM finalisation -> Material Request -> Permission received
-- **Area Installation and Construction**: Upload material delivery receipt -> Ready for construction -> As-Built capture -> Construction completed -> Assign for Testing -> Testing -> Review Testing -> Testing Completed -> Ready for Service -> Work Completion Certificate -> Ready for HOTO
-- **FiberLink HOTO**: Document Submission -> Verification -> Final Handover and Sign-Off -> Ready for service
-- **Area Construction Pack**: Assign trenching and ducting -> Trenching and Ducting -> Assign access chamber installation -> Access chamber installation -> Assign cable blowing -> Cable Blowing -> Assign equipment installation -> EQUIPMENT INSTALLATION -> Assign splicing task -> SPLICING -> Assign RoW -> RoW
-- **Perform Area Of Interest**: Assign for AOI Survey -> AOI Survey -> AOI Review
-- **OLT Installation and Commissioning (Site)**: Assign for Site Readiness -> Site Readiness -> Review -> Site Readiness Completed -> Assign for Installation -> OLT Installation -> Review Installation -> Installation Completed -> Acceptance Test Procedure -> Review Test Report -> Test Report Completed -> HOTO -> HOTO Completed -> Ready for Service -> View In Service
-- **Survey and Acquisition (Site)**: Assign for Site Survey -> Site Survey -> Review -> Survey completed -> Acquisition -> Leasing -> Legal Approval -> Financial Approval -> Ready for Construction
-- **Site Design and Construction (Site)**: Assign Site Design -> Site Design -> Review Design -> Design Complete -> Building Design -> Building Design Review -> BOM Preparation -> Material Request -> Material Receipt -> Ready for Construction -> Site Inspection -> Ready for Commissioning -> Earth Pits -> Shelter and Fencing -> Foundation -> Electric Construction
-
-[PLACEHOLDER: WORKFLOW_DIAGRAMS_PNG_BUNDLE]
-
 ## 3. Solution Features and User Interface
 
 - **Area/Link/Site Management**: Create/Edit geometry on map, attribute forms, stage transitions.
@@ -931,57 +975,127 @@ FOR EACH ROW EXECUTE FUNCTION cdc_capture();
 
 [PLACEHOLDER: DEBEZIUM_CONNECTOR_YAML]
 
-## 6. API Details
+## Fiberneo API Details
 
-Link to Swagger: [PLACEHOLDER: SWAGGER_JSON_LINK]
+This document summarizes REST endpoints for core entities exposed by the `fiberneo-api` module, formatted as concise tables. All paths are relative to the service base and secured via API Gateway.
 
-Guidelines: Version APIs under `/api/v1`; use pagination (`offset`, `size`), filtering via `query` (RSQL), rate limit write-heavy endpoints.
+### Area (`/Area`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Area | FIBERNEO_AREA_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_AREA_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_AREA_VIEW |
+| `update` | POST | Update Area | FIBERNEO_AREA_CREATE |
+| `getAreaTrends` | GET | Trends | FIBERNEO_AREA_VIEW |
+| `getAreaByViewPort` | GET | Areas in viewport | FIBERNEO_AREA_VIEW |
+| `getAreaCountByViewPort` | GET | Count in viewport | FIBERNEO_AREA_VIEW |
+| `getAreaByROWDetails` | GET | Areas by ROW filter | FIBERNEO_AREA_VIEW |
+| `getAreaCountsByROWDetails` | GET | Area counts by ROW | FIBERNEO_AREA_VIEW |
+| `getServiceImpactedArea` | GET | Impacted areas by incident | FIBERNEO_AREA_VIEW |
+| `getDataForAudit` | GET | Audit data | FIBERNEO_AREA_VIEW |
+| `importData` | POST | Import (multipart) | FIBERNEO_AREA_CONFIGURATOR |
+| `export` | GET | Export data | FIBERNEO_AREA_CONFIGURATOR |
+| `importFile` | POST | Import CSV | FIBERNEO_AREA_CONFIGURATOR |
+| `downloadTemplate` | GET | Download import template | FIBERNEO_AREA_VIEW |
 
-Representative APIs (from code):
+### Link (`/Link`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Link | FIBERNEO_LINK_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_LINK_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_LINK_VIEW |
+| `update` | POST | Update Link | FIBERNEO_LINK_CREATE |
+| `getLinkCountsByStatus` | GET | Counts by status | FIBERNEO_LINK_VIEW |
+| `getLinkCountsByCity` | GET | Counts by city | FIBERNEO_LINK_VIEW |
+| `getLinkTrends` | GET | Trends | FIBERNEO_LINK_VIEW |
+| `downloadTemplate` | GET | Download import template | FIBERNEO_LINK_CONFIGURATOR |
+| `getLinkDetailsByCircuitId` | GET | Links by circuit | FIBERNEO_LINK_VIEW |
 
-- **Area** (`/Area`)
-  - `POST /Area/create`: Create Area
-  - `GET /Area/count`: Count with RSQL filter
-  - `GET /Area/search`: List with pagination/sort
-  - `POST /Area/update`: Update
-  - `GET /Area/deleteById`: Delete
-  - `GET /Area/softDelete`: Soft delete
-  - `GET /Area/findById`: Get by id
-  - `GET /Area/findAllById`: Bulk get
-  - `GET /Area/getLayer`, `GET /Area/getLayerByBbox`
-  - `GET /Area/getBuildingLayer`, `GET /Area/getBuildingLayerByBbox`
-  - `GET /Area/getAreaPoles`, `GET /Area/getAreaPolesByBbox`
-  - `GET /Area/getAreaDropTrench`, `GET /Area/getAreaDropTrenchByBbox`
-  - `GET /Area/getPolesOnArea`, `GET /Area/getDropTrenchOnArea`
-  - `GET /Area/getAreaCountsByStatus`, `GET /Area/getAreaCountsByCity`
-  - `POST /Area/updateProjectStatus`, `POST /Area/updateDeploymentType`
-  - `GET /Area/getPriorityCountByDeploymentType`, `GET /Area/getBoundaryJsonFromArea`, `GET /Area/getAreaTrends`
-  - `GET /Area/getAreaByViewPort`, `GET /Area/getAreaCountByViewPort`
-  - `GET /Area/getAreaByROWDetails`, `GET /Area/getAreaCountsByROWDetails`, `GET /Area/getServiceImpactedArea`, `GET /Area/getDataForAudit`
-  - `POST /Area/importData` (multipart), `GET /Area/export`, `POST /Area/importFile`, `GET /Area/downloadTemplate`
+### Facility (`/Facility`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Facility | FIBERNEO_FACILITY_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_FACILITY_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_FACILITY_VIEW |
+| `update` | POST | Update Facility | FIBERNEO_FACILITY_CREATE |
+| `getFacitlityTrends` | GET | Trends | FIBERNEO_SITE_VIEW |
+| `findShortestPathByGoogleApi` | POST | Shortest path | FIBERNEO_FACILITY_VIEW |
+| `bulkUpdate` | POST | Bulk update | FIBERNEO_FACILITY_CONFIGURATOR |
+| `getDataForAudit` | GET | Audit data | FIBERNEO_FACILITY_VIEW |
+| `importData` | POST | Import (multipart) | FIBERNEO_FACILITY_CONFIGURATOR |
 
-- **Link** (`/Link`)
-  - `POST /Link/create`, `POST /Link/createByMap`
-  - `GET /Link/count`, `GET /Link/search`
-  - `POST /Link/update`, `GET /Link/deleteById`, `GET /Link/softDelete`
-  - `GET /Link/findById`, `GET /Link/findAllById`
-  - `GET /Link/getLinkCountsByStatus`, `GET /Link/getLinkCountsByCity`
-  - `POST /Link/updateProjectStatus`, `GET /Link/getEntityTypeCountsByStatus`, `POST /Link/updateDeploymentType`, `GET /Link/getPriorityCountByDeploymentType`
-  - `GET /Link/getBoundaryJsonFromLink`, `GET /Link/getLinkTrends`
-  - `GET /Link/getLinkByViewPort`, `GET /Link/getLinkCountByViewPort`
-  - `GET /Link/getLinkByROWDetails`, `GET /Link/getLinkCountsByROWDetails`
-  - `GET /Link/lossBudgetByLinkId/{linkId}`, `GET /Link/getDataForAudit`
-  - `POST /Link/importData`, `GET /Link/export`, `POST /Link/importFile`, `GET /Link/downloadTemplate`
-  - `GET /Link/getLinkDetailsByCircuitId`
+### CustomerSite (`/CustomerSite`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Customer Site | FIBERNEO_CUSTOMER_SITE_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_CUSTOMER_SITE_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_CUSTOMER_SITE_VIEW |
+| `update` | POST | Update Customer Site | FIBERNEO_CUSTOMER_SITE_CREATE |
+| `updateProjectStatus` | POST | Update stage status | FIBERNEO_CUSTOMER_SITE_CREATE |
+| `notifyAfterIC` | GET | Notify after I&C | FIBERNEO_CUSTOMER_SITE_VIEW |
+| `siteInventoryAvailable` | GET | Check site inventory | FIBERNEO_CUSTOMER_SITE_CREATE |
 
-- **CustomerSite (Site)** (`/CustomerSite`)
-  - `POST /CustomerSite/create`
-  - `GET /CustomerSite/count`, `GET /CustomerSite/search`
-  - `POST /CustomerSite/update`, `GET /CustomerSite/deleteById`, `GET /CustomerSite/softDelete`
-  - `GET /CustomerSite/findById`, `GET /CustomerSite/findAllById`
-  - `POST /CustomerSite/updateProjectStatus`
-  - `GET /CustomerSite/notifyAfterIC`
-  - `GET /CustomerSite/siteInventoryAvailable`
+### Equipment (`/Equipment`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Equipment | FIBERNEO_EQUIPMENT_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_EQUIPMENT_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_EQUIPMENT_VIEW |
+| `update` | POST | Update Equipment | FIBERNEO_EQUIPMENT_CREATE |
+| `getEquipmentByViewPort` | GET | Equipment in viewport | FIBERNEO_EQUIPMENT_VIEW |
+| `getEquipmentByCircuitId` | GET | Equipment by circuit | FIBERNEO_EQUIPMENT_VIEW |
+| `getEquipmentDetailsByCircuitId` | GET | Equipment details by circuit | FIBERNEO_EQUIPMENT_VIEW |
+| `bulkUpdate` | POST | Bulk update | FIBERNEO_EQUIPMENT_CONFIGURATOR |
+| `getRouterDetailsByODF` | GET | Router details by ODF | FIBERNEO_EQUIPMENT_VIEW |
+
+### Structure (`/Structure`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Structure | FIBERNEO_STRUCTURE_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_STRUCTURE_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_STRUCTURE_VIEW |
+| `update` | POST | Update Structure | FIBERNEO_STRUCTURE_CREATE |
+| `getStructureHistory` | GET | Structure audit history | FIBERNEO_STRUCTURE_VIEW |
+| `softDelete` | GET | Soft delete by ID | FIBERNEO_STRUCTURE_CREATE |
+
+### Span (`/Span`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Span | FIBERNEO_SPAN_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_SPAN_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_SPAN_VIEW |
+| `update` | POST | Update Span | FIBERNEO_SPAN_CREATE |
+| `bulkUpdate` | POST | Bulk update | FIBERNEO_SPAN_CONFIGURATOR |
+| `softDelete` | GET | Soft delete by ID | FIBERNEO_SPAN_CREATE |
+
+### Conduit (`/Conduit`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Conduit | FIBERNEO_CONDUIT_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_CONDUIT_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_CONDUIT_VIEW |
+| `update` | POST | Update Conduit | FIBERNEO_CONDUIT_CREATE |
+| `bulkUpdate` | POST | Bulk update | FIBERNEO_CONDUIT_CONFIGURATOR |
+| `softDelete` | GET | Soft delete by ID | FIBERNEO_CONDUIT_CREATE |
+
+### Transmedia (`/Transmedia`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create Transmedia | FIBERNEO_TRANSMEDIA_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_TRANSMEDIA_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_TRANSMEDIA_VIEW |
+| `update` | POST | Update Transmedia | FIBERNEO_TRANSMEDIA_CREATE |
+| `bulkUpdate` | POST | Bulk update | FIBERNEO_TRANSMEDIA_CONFIGURATOR |
+| `softDelete` | GET | Soft delete by ID | FIBERNEO_TRANSMEDIA_CREATE |
+
+### ROW (`/RowDetails`)
+| Endpoint | Method | Description | Security Scope |
+|----------|--------|-------------|----------------|
+| `create` | POST | Create RowDetails | FIBERNEO_ROW_DETAILS_CREATE |
+| `count` | GET | Count with RSQL filter | FIBERNEO_ROW_DETAILS_VIEW |
+| `search` | GET | Search with pagination/sort | FIBERNEO_ROW_DETAILS_VIEW |
+| `update` | POST | Update RowDetails | FIBERNEO_ROW_DETAILS_CREATE |
+
 
 - **Facility** (`/Facility`) and Equipment/NetworkEquipment (similar CRUD/search/export/import; viewport and circuit-based queries; bulkUpdate)
 
@@ -1058,68 +1172,134 @@ API-to-permission mapping (examples):
 }
 ```
 
-[PLACEHOLDER: PERMISSION_GROUP_FILES]
-
 ## 8. Monitoring & Alerting
 
-- Metrics: API latency/5xx; DB replication lag; stage transition processing time; event publish failures; CDC backlog; viewport query duration.
-- Example alert rules (Prometheus):
-```
-ALERT StageTransitionLag IF histogram_quantile(0.95, sum(rate(stage_transition_seconds_bucket[5m])) by (le)) > 5 LABELS {severity="warning"}
-ALERT EventPublishFailures IF sum(rate(kafka_publish_errors_total[5m])) > 0 LABELS {severity="critical"}
-ALERT ReplicationLag IF pg_replication_lag_seconds > 30 LABELS {severity="critical"}
-```
+**Monitoring tool URL**:
 
-[PLACEHOLDER: DASHBOARD_SCREENSHOTS]
+- [Monitoring URL](https://demo.visionwaves.com/netsingularity/of-monitoring-app/metrices)
+- [Logs URL](https://demo.visionwaves.com/netsingularity/of-monitoring-app/logs)
+- [APM URL](https://demo.visionwaves.com/APM/)
+
+    *Note* - Above url will be open by respective user credentials
+
+- **Metrics Monitoring**:
+<div align="center">
+<img src="../SCM_Img/metrics.png" alt="User Login Request Flow" height="500" 
+style="background: transparent;">
+</div>
+
+- **Logs Monitoring**:
+<div align="center">
+<img src="../SCM_Img/logs.png" alt="User Login Request Flow" height="500" 
+style="background: transparent;">
+</div>
+
+- **APM Monitoring**:
+<div align="center">
+<img src="../SCM_Img/APM.png" alt="User Login Request Flow" height="500" 
+style="background: transparent;">
+</div>
+
+### 8.1 Key Metrics
+- **API Response Times**: Track endpoint performance
+- **Database Performance**: Query execution times and connection pools
+- **Service Health**: Uptime and availability metrics
+- **Business Metrics**: Order processing times, inventory levels
+- **Error Rates**: Track and alert on error thresholds
+
+### 8.2 Alerting Rules
+- **High Error Rate**: Alert when error rate exceeds 5%
+- **Slow Response**: Alert when API response time exceeds 2 seconds
+- **Database Issues**: Alert on connection pool exhaustion
+- **Low Inventory**: Alert when inventory levels fall below threshold
+- **Failed Workflows**: Alert on BPMN workflow failures
 
 ## 9. Performance and Scaling
 
-- Scale: 300–1000 concurrent API calls; 50–200 shipments/min; 200–1000 inventory updates/sec; heavy map queries.
-- Patterns: read replicas for reporting; partition hot tables (`entity_status_history` by month); Redis cache for lookups; async queues for heavy writes (import/export, GIS generation); shard by region for areas/links if needed.
-- Capacity: start with 4 vCPU/8GB pods x 3 replicas for FN; PostgreSQL 4 vCPU/16GB with NVMe; Redis 2 vCPU/4GB; Kafka 3-broker small cluster.
+*[Placeholder for Performance Screenshots and Documentation]*
 
-[PLACEHOLDER: STRESS_TEST_RESULTS_DOCS]
+### 9.1 Performance Optimizations
+- **Database Indexing**: Optimized indexes for frequently queried columns
+- **Caching Strategy**: Redis caching for frequently accessed data
+- **Connection Pooling**: Optimized database connection management
+- **Query Optimization**: RSQL-based filtering and pagination
+- **Async Processing**: Background processing for heavy operations
+
+### 9.2 Scaling Strategy
+- **Horizontal Scaling**: Microservices can be scaled independently
+- **Database Sharding**: Customer-based data partitioning
+- **Load Balancing**: API Gateway with load balancing
+- **CDN Integration**: Static content delivery optimization
+- **Auto-scaling**: Kubernetes-based auto-scaling policies
 
 ## 10. Operation Runbook
 
 ### 10.1 Common Issues & Debugging
 
-- Splice/port allocation conflict:
-  - Check locks: `SELECT * FROM ports WHERE status='reserved';`
-  - Release via admin endpoint if stale; review `splice_records`.
-  - [PLACEHOLDER: SCREENSHOT – SPLICING]
+*[Placeholder for Common Issues Screenshots and Documentation]*
 
-Logs & locations:
-- App logs: `/var/log/fiberneo/*.log`; K8s: `kubectl logs deploy/fiberneo`.
-- Integration logs: topic `fiberneo.integration.*`.
+**Common Issues:**
+1. **Database Connection Issues**: Check connection pool configuration
+2. **Workflow Failures**: Verify BPMN engine connectivity
+3. **Cache Misses**: Check Redis connectivity and configuration
+4. **Permission Errors**: Verify RBAC configuration and user roles
+5. **Data Synchronization**: Check CDC configuration and event processing
+
+**Debugging Steps:**
+1. Check application logs for error details
+2. Verify service health endpoints
+3. Check database connectivity and performance
+4. Validate configuration parameters
+5. Review monitoring dashboards for anomalies
 
 ### 10.2 Performance Tuning Guide
 
-- DB: create composite indexes on `(entity_type, status)`; GIST on `geom`; analyze/vacuum schedule.
-- Batch sizes: 500–2000 rows for import; JDBC fetch size 500.
-- Connection pools: 50–200 per instance; backoff on saturation.
-- JVM: -Xms1g -Xmx4g; G1GC; thread pools sized to CPU.
-- Query optimization: avoid ST_Intersects on unindexed; pre-filter via bbox.
+*[Placeholder for Performance Tuning Screenshots and Documentation]*
 
-[PLACEHOLDER: TUNING_CHECKLIST]
+**Database Tuning:**
+- Monitor slow query logs
+- Optimize indexes based on query patterns
+- Tune connection pool settings
+- Configure appropriate buffer sizes
+
+**Application Tuning:**
+- Monitor JVM heap usage
+- Tune garbage collection settings
+- Optimize cache configurations
+- Review and optimize API response times
 
 ## 11. Appendices
 
-- Glossary:
-  - **Area**: Geographic polygon where rollout occurs.
-  - **Link**: Network path connecting facilities; has spans/transmedia.
-  - **CustomerSite (Site)**: Customer/service site (OLT/POP/Building).
-  - **Span**: Segment of a link between two structures.
-  - **Conduit**: Physical duct capacity unit along spans.
-  - **Transmedia**: Cable/fiber along a link.
-  - **Facility**: Site node hosting equipment.
-  - **Equipment**: Network device within facility; has shelves/slots/ports.
-  - **Structure**: Physical structure (pole/chamber).
-  - **Obstacles**: Geo-hazards impacting routing.
-  - **ReferencePoint**: Survey marker.
+### 11.1 Technology Stack
+- **Backend**: Java 17, Spring Boot 3.x, Spring Cloud
+- **Database**: MySQL 8.1
+- **Cache**: Redis
+- **Search**: Elasticsearch
+- **Message Queue**: Apache Kafka
+- **Container**: Docker, Kubernetes
+- **API Gateway**: Spring Cloud Gateway
+- **Security**: OAuth2, JWT
+- **Monitoring**: Prometheus, Grafana
+- **Logging**: ELK Stack
 
-- Data retention & compliance: retain audit/CDC 7 years; purge PII on request; geo data under regional regulations.
-- Security: TLS in transit; AES-256 at rest; secrets via Vault; OWASP Top 10; authN via OIDC/JWT; fine-grained RBAC/ABAC.
-- Links to related docs: [PLACEHOLDER: OPERATIONS_GUIDE_LINK], [PLACEHOLDER: DEPLOYMENT_GUIDE_LINK], [PLACEHOLDER: UML_DIAGRAMS_LINK]
+### 11.2 Database Schema Statistics
+- **Total Tables**: 40+ tables across all modules
+- **Material Management**: 15+ tables
+- **Procurement Management**: 10+ tables
+- **Warehouse Management**: 8+ tables
+- **Logistics Management**: 7+ tables
 
+### 11.3 API Statistics
+- **Total Endpoints**: 50+ REST endpoints
+- **Material Management**: 15+ endpoints
+- **Procurement Management**: 15+ endpoints
+- **Warehouse Management**: 12+ endpoints
+- **Logistics Management**: 8+ endpoints
 
+### 11.4 Security Features
+- **Authentication**: OAuth2 with JWT tokens
+- **Authorization**: Role-based access control (RBAC)
+- **Data Encryption**: At-rest and in-transit encryption
+- **Audit Logging**: Comprehensive audit trail
+- **Input Validation**: Comprehensive input validation and sanitization
+- **Rate Limiting**: API rate limiting and throttling

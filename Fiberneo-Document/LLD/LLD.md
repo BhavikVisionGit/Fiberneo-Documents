@@ -2,8 +2,8 @@
 
 ### 1.1 Objective and Scope
 
-- **Objective**: Design the FIBERNEO Supply Chain Management microservice for Fiberneo Roll Out Service to manage planning, survey, construction, testing, HOTO, and in-service management across Area, Link, and Site entities. Responsibilities include: Create/Update Area, Link, CustomerSite (Site); manage Projects and stage transitions; perform Planning, Survey, Construction, Testing, Review, BOM/BOQ, Material Request/Receipt; Splicing and Port management; and orchestrated workflow status updates.
-- **Scope owned by FIBERNEO**: Domain entities and operations for Area, Link, CustomerSite, Span, Conduit, Transmedia, Facility, Equipment, Structure, Obstacles, ReferencePoint; workflow status tracking; spatial map operations; splicing/ports/strands; inventory view for projects; data export/import; CDC to data lake; API and RBAC.
+- **Objective**: Design the Fiberneo core microservice for Roll Out to manage planning, survey, construction, testing, HOTO, and in-service management across Area, Link, and Site entities. Responsibilities include: Create/Update Area, Link, CustomerSite (Site); manage projects and stage transitions; perform Planning, Survey, Construction, Testing, Review; Splicing and Port management; and orchestrated workflow status updates.
+- **Scope owned by FIBERNEO**: Domain entities and operations for Area, Link, CustomerSite, Span, Conduit, Transmedia, Facility, Equipment, Structure, Obstacles, ReferencePoint; workflow status tracking; spatial map operations; splicing/ports/strands; read-only inventory views where needed; data export/import; CDC to data lake; API and RBAC.
 - **Out of scope / owned by external systems**:
   - **Other Service (Task Orchestrator/Workflow)**: triggers tasks/flows, approvals, SLA timers, complex BPMN.
   - **Material Management/ERP**: Material master, purchase orders, invoices, vendor settlement, ASN, warehouse ledger.
@@ -39,8 +39,13 @@ graph TD
   W --> GW
   M --> GW
 
-  subgraph MS[Microservices]
+  %% Fiberneo highlighted separately
+  subgraph FNS[Fiberneo Core]
     FN[FIBERNEO Microservice]
+  end
+
+  %% Other microservices grouped
+  subgraph OMS[Other Microservices]
     PRJ[Project/Workflow Service]
     MAT[Material Mgmt Service]
     BLD[Builder/Vendor Service]
@@ -57,29 +62,10 @@ graph TD
 
   subgraph Data
     DB[(PostgreSQL + PostGIS)]
-    CACHE[(Redis Cache)]
-    OBJ[(Object Storage)]
-    MQ[[Kafka]]
-    DWH[(Data Lake/Warehouse)]
   end
 
   FN <--> DB
-  FN <--> CACHE
-  FN --> MQ
-  MQ --> DWH
-  FN --> OBJ
 
-  subgraph External
-    OSV[Other Service (Task Trigger)]
-    ERP[ERP/Finance]
-    LOGI[Logistics Provider]
-    VEND[Vendor APIs]
-  end
-
-  PRJ <--> OSV
-  MAT <--> ERP
-  MAT <--> VEND
-  MAT <--> LOGI
 ```
 
 [PLACEHOLDER: ARCHITECTURE_DIAGRAM_PNG_URL]
@@ -88,19 +74,104 @@ graph TD
 
 ```mermaid
 flowchart LR
-  A[API Layer (Spring Controllers/Feign)] --> B[Business Services]
-  B --> C[Area/Link/Site Modules]
-  B --> D[Survey & Planning]
-  B --> E[Construction & Testing]
-  B --> F[Splicing Manager (Strands/Ports)]
-  B --> G[Warehouse Integration]
-  B --> H[Data Sync / CDC]
-  B --> I[Export/Import]
-  C --> P[Persistence (JPA/Repositories)]
-  P --> DB[(PostgreSQL/PostGIS)]
-  B --> K[Cache (Redis)]
-  B --> Q[Events (Kafka)]
-  B --> R[Object Storage]
+  %% Clients and Gateway
+  subgraph Clients
+    Web[Web UI]
+    Mobile[Mobile App]
+  end
+  subgraph Gateway[API Gateway / Swagger UI]
+    Auth[AuthN/Z, Routing, Rate Limit]
+  end
+  Web --> Auth
+  Mobile --> Auth
+
+  %% Backend modules (multi-module project)
+  subgraph Backend[fiberneo Backend]
+    direction LR
+
+    %% API module
+    subgraph API[fiberneo-api]
+      direction TB
+      Ctrls[REST Controllers]
+      DTO[DTO Models & Validation]
+      Feign[Feign/HTTP Clients]
+    end
+
+    %% App module (bootstrapping)
+    subgraph APP[fiberneo-app]
+      direction TB
+      Boot[Spring Boot App]
+      Config[App Config/Profiles]
+      Sched[Jobs/Schedulers]
+    end
+
+    %% Service module (domain + persistence)
+    subgraph SVC[fiberneo-service]
+      direction TB
+      BL[Business Services]
+      Dom[Domain Models]
+      Repo[JPA Repositories]
+      Intg[Integrations & Adapters]
+      Outbox[Outbox/CDC Publisher]
+    end
+  end
+
+  Auth --> Ctrls
+  APP --> Ctrls
+  Ctrls --> BL
+  DTO --> Ctrls
+  BL --> Dom
+  BL --> Repo
+  BL --> Intg
+  Intg --> Feign
+
+  %% Functional domains within Business Services
+  subgraph Domains[Managed Components]
+    direction TB
+    Area[Area/Link/Site Modules]
+    Survey[Survey & Planning]
+    Constr[Construction & Testing]
+    Splice[Splicing / Ports / Strands]
+    Inv[Inventory View (read-only)]
+    ExpImp[Export / Import]
+    CDC[Data Sync / CDC]
+  end
+  BL --> Area
+  BL --> Survey
+  BL --> Constr
+  BL --> Splice
+  BL --> Inv
+  BL --> ExpImp
+  BL --> CDC
+  CDC --> Outbox
+
+  %% Data and infrastructure
+  subgraph Data[Infra & Data Stores]
+    direction TB
+    DB[(PostgreSQL / PostGIS)]
+    Cache[(Redis)]
+    MQ[[Kafka]]
+    Obj[(Object Storage)]
+    DWH[(Data Lake/Warehouse)]
+  end
+  Repo --> DB
+  BL --> Cache
+  BL --> Obj
+  Outbox --> MQ
+  MQ --> DWH
+
+  %% External services
+  subgraph External[External Systems]
+    direction TB
+    PRJ[Project/Workflow Service]
+    MAT[Material Mgmt/ERP]
+    VEND[Vendor APIs]
+    NOTIF[Notification Service]
+  end
+  Intg <--> PRJ
+  Intg <--> MAT
+  Intg <--> VEND
+  BL --> NOTIF
 ```
 
 Component interactions:
@@ -113,21 +184,23 @@ Component interactions:
 ```mermaid
 sequenceDiagram
   participant U as User (Web/Mobile)
-  participant UI as Map UI
+  participant UI as UI (Map/Form)
   participant GW as API Gateway
-  participant FN as FIBERNEO API
-  participant SVC as Area/Link/Site Service
-  participant DB as PostgreSQL
+  participant API as fiberneo-api
+  participant SVC as Business Service (fiberneo-service)
+  participant DB as PostgreSQL/PostGIS
+  participant MQ as Kafka (Outbox/CDC)
 
-  U->>UI: Draw geometry & form data
-  UI->>GW: POST /Area/create (JSON)
-  GW->>FN: Route + AuthZ
-  FN->>SVC: validate + enrich
-  SVC->>DB: INSERT area + geojson
+  U->>UI: Create/Update entity (Area/Link/Site)
+  UI->>GW: POST /api/{entity}/create
+  GW->>API: Route + AuthZ
+  API->>SVC: Validate + transform DTO
+  SVC->>DB: Persist entity/geo
   DB-->>SVC: id
-  SVC-->>FN: Area
-  FN-->>GW: 201 + Area
-  GW-->>UI: Render feature on map
+  SVC->>MQ: Publish event (stage.changed)
+  SVC-->>API: Response payload
+  API-->>GW: 201 Created
+  GW-->>UI: Render entity on map
 ```
 
 #### Project Flows (high-level)
@@ -149,6 +222,484 @@ sequenceDiagram
   FN->>MAT: Material Request (BOM/BOQ)
   MAT-->>FN: ASN/Receipt
   FN->>DB: persist status, audit
+```
+
+### Area Planning Survey (also for Link Planning Survey)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Initiate Planning
+  UI->>GW: POST projectTemplate/area/planning
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>FN: Update Data
+
+  U->>UI: Review Planning
+  UI->>GW: POST projectTemplate/area/review-planning
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Ready for Survey
+  UI->>GW: POST projectTemplate/area/ready-for-survey
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Assign for Survey
+  UI->>GW: POST projectTemplate/area/assign-for-survey
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  U->>UI: Perform Survey
+  UI->>GW: POST projectTemplate/area/perform-survey
+  GW->>PG: Route
+  PG->>BD: User performs task → create child entities (Span, Conduit, Facility, Equipment, Structure, Obstacle, ReferencePoint)
+  BD->>FN: Create Child Entity
+
+  U->>UI: Review Survey
+  UI->>GW: POST projectTemplate/area/review-survey
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Survey Completed
+  UI->>GW: POST projectTemplate/area/survey-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Perform Detail Design
+  UI->>GW: POST projectTemplate/area/perform-detail-design
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Review Design
+  UI->>GW: POST projectTemplate/area/design-review
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Design Completed
+  UI->>GW: POST projectTemplate/area/design-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Generate BOM
+  UI->>GW: POST projectTemplate/area/generate-bom
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Generate Bill of Material
+
+  U->>UI: BOQ/BOM Finalisation
+  UI->>GW: POST projectTemplate/area/boq-bom-finalisation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  U->>UI: Material Request
+  UI->>GW: POST projectTemplate/area/material-request
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Material Request
+
+  U->>UI: Permission Received
+  UI->>GW: POST projectTemplate/area/permission-received
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### Area Installation and Construction
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Upload material delivery receipt
+  UI->>GW: POST projectTemplate/area/upload-material-delivery-receipt
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Material Delivery Receipt
+
+  UI->>GW: POST projectTemplate/area/ready-for-construction
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/as-built-capture
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>FN: Update Data
+
+  UI->>GW: POST projectTemplate/area/construction-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-for-testing
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/testing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/review-testing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/testing-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/ready-for-service
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/work-completion-certificate
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/ready-for-hoto
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### FiberLink HOTO
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Document Submission
+  UI->>GW: POST projectTemplate/fiberlink/document-submission
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/fiberlink/verification
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/fiberlink/final-handover-signoff
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/fiberlink/ready-for-service
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### Area Construction Pack
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Assign trenching and ducting
+  UI->>GW: POST projectTemplate/area/assign-trenching-ducting
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/trenching-ducting
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-access-chamber-installation
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/access-chamber-installation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-cable-blowing
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/cable-blowing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-equipment-installation
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/equipment-installation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-splicing-task
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/splicing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/area/assign-row
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/area/row
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### Perform Area Of Interest (AOI)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Assign for AOI Survey
+  UI->>GW: POST projectTemplate/aoi/assign-survey
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/aoi/survey
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/aoi/review
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### OLT Installation and Commissioning (Site)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Assign for Site Readiness
+  UI->>GW: POST projectTemplate/site/assign-readiness
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/site/readiness
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/review
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/readiness-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/assign-installation
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/site/olt-installation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/review-installation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/installation-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/atp
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/review-test-report
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/test-report-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/hoto
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/hoto-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/ready-for-service
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: GET projectTemplate/site/in-service
+  GW->>PG: Route
+  PG->>BD: View In Service
+```
+
+### Survey and Acquisition
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Assign for Site Survey
+  UI->>GW: POST projectTemplate/site/assign-survey
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/site/survey
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/review
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/survey-completed
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/acquisition
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/leasing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/legal-approval
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/financial-approval
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/ready-for-construction
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+```
+
+### Site Design and Construction
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web/Mobile UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+  participant MM as Material Management MicroService
+
+  U->>UI: Assign Site Design
+  UI->>GW: POST projectTemplate/site/assign-design
+  GW->>PG: Route
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectTemplate/site/design
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/review-design
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/design-complete
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/building-design
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/building-design-review
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/bom-preparation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Generate Bill of Material
+
+  UI->>GW: POST projectTemplate/site/material-request
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Material Request
+
+  UI->>GW: POST projectTemplate/site/material-receipt
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+  BD->>MM: Material Receipt
+
+  UI->>GW: POST projectTemplate/site/ready-for-construction
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/inspection
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/ready-for-commissioning
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/earth-pits
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/shelter-fencing
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/foundation
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectTemplate/site/electric-construction
+  GW->>PG: Route
+  PG->>BD: Associate Form or Task
 ```
 
 #### Specific Project Flows (Area/Link/Site)
@@ -196,8 +747,7 @@ Use the following as canonical workflows; each transition updates `project_stage
   - Topics: `fiberneo.stage.events` (Kafka).
 
 - **ERP/Finance**
-  - Flows: PO creation, invoice posting, GRN. Format: JSON over REST; optional XML for batch.
-  - Endpoints: `POST /erp/po`, `POST /erp/invoice`, `POST /erp/grn`.
+  - Flows (external): PO/Invoice/GRN handled outside Fiberneo; we integrate via minimal REST/webhooks as needed. No local persistence.
 
 - **Logistics Provider**
   - Shipment creation: `POST /logistics/shipments`.
@@ -208,7 +758,7 @@ Use the following as canonical workflows; each transition updates `project_stage
   - Ack: `POST /vendors/{id}/ack`.
 
 - **Inventory sync**
-  - Pattern: CDC from `material_request`, `material_receipt`, `warehouse_stock` to ERP; event-based cache invalidation.
+  - Pattern: Event-only integration for inventory-related updates originating from external MM/ERP; Fiberneo does not own stock or procurement data.
 
 Recommended patterns: synchronous REST for lookup/read; async Kafka for create/update side effects and cross-domain propagation.
 
@@ -242,8 +792,6 @@ Note: Names align to domain; keys abbreviated. Sample indexes suggested; actual 
   - `surveys` (pk id, entity_type, entity_id, stage, assigned_to, started_at, completed_at, status)
   - `survey_segments` (pk id, survey_id fk, segment_type, geom, notes)
   - `designs` (pk id, entity_type, entity_id, version, status, file_url)
-  - `bom_items` (pk id, entity_type, entity_id, material_code, qty, uom, status)
-  - `boq_items` (pk id, entity_type, entity_id, service_code, qty, uom, rate)
 
 - **B. Network Model**
   - `facilities` (pk id, facility_type, name, status, location point, area_id fk)
@@ -262,11 +810,8 @@ Note: Names align to domain; keys abbreviated. Sample indexes suggested; actual 
   - `reference_points` (pk id, name, type, location point, notes)
   - `obstacles` (pk id, area_id fk, type, severity, geom, notes)
 
-- **C. Warehouse & Material (integration-facing)**
-  - `material_requests` (pk id, entity_type, entity_id, bom_version, status, requested_by, requested_at)
-  - `material_receipts` (pk id, request_id fk, asn_no, received_at, received_by, status)
-  - `warehouse_stock` (pk id, material_code, warehouse_id, qty_on_hand, qty_reserved, updated_at)
-  - `shipments` (pk id, request_id fk, provider, tracking_no, status, eta)
+-- **C. Warehouse & Material (integration-facing)**
+  - Managed by external Material Management/ERP. Fiberneo does not persist procurement or stock tables; only integrates via APIs/events.
 
 - **D. Workflow & Status**
   - `entity_status_history` (pk id, entity_type, entity_id, from_stage, to_stage, actor, at)
@@ -318,8 +863,7 @@ erDiagram
   SLOTS ||--o{ PORTS : exposes
   CUSTOMER_SITES }o--|| AREAS : located_in
   PROJECTS ||--o{ DESIGNS : versions
-  PROJECTS ||--o{ BOM_ITEMS : requires
-  MATERIAL_REQUESTS ||--o{ SHIPMENTS : fulfilled_by
+  %% BOM/Material entities are external; no local persistence
 ```
 
 [PLACEHOLDER: ER_DIAGRAM_PNG_URL]
@@ -334,7 +878,6 @@ erDiagram
 | areas | id | dwh.areas | id,name,code,status,priority,deployment_type,geom | real-time | mask(name?) | 7y |
 | links | id | dwh.links | id,name,status,deployment_type,length_m,geom | real-time | none | 7y |
 | customer_sites | id | dwh.customer_sites | id,name,site_code,status,location | real-time | none | 7y |
-| material_requests | id | dwh.material_requests | all non-PII | real-time | none | 7y |
 | entity_status_history | id | dwh.entity_status_history | all | real-time | none | 7y |
 
 Debezium connector snippet (placeholder):
@@ -351,7 +894,7 @@ Debezium connector snippet (placeholder):
     "plugin.name": "pgoutput",
     "slot.name": "fiberneo_slot",
     "publication.autocreate.mode": "filtered",
-    "table.include.list": "public.areas,public.links,public.customer_sites,public.material_requests,public.entity_status_history",
+    "table.include.list": "public.areas,public.links,public.customer_sites,public.entity_status_history",
     "tombstones.on.delete": "false",
     "topic.prefix": "fiberneo",
     "heartbeat.interval.ms": "10000"
@@ -519,11 +1062,11 @@ API-to-permission mapping (examples):
 
 ## 8. Monitoring & Alerting
 
-- Metrics: API latency/5xx; DB replication lag; inventory negative balance; PO aging; shipment exceptions; provisioning failures; CDC backlog; viewport query duration.
+- Metrics: API latency/5xx; DB replication lag; stage transition processing time; event publish failures; CDC backlog; viewport query duration.
 - Example alert rules (Prometheus):
 ```
-ALERT InventoryNegativeBalance IF sum(warehouse_stock_qty_on_hand < 0) BY (warehouse) > 0 FOR 5m LABELS {severity="critical"}
-ALERT POAging IF avg_over_time(po_age_days[24h]) > 7 LABELS {severity="warning"}
+ALERT StageTransitionLag IF histogram_quantile(0.95, sum(rate(stage_transition_seconds_bucket[5m])) by (le)) > 5 LABELS {severity="warning"}
+ALERT EventPublishFailures IF sum(rate(kafka_publish_errors_total[5m])) > 0 LABELS {severity="critical"}
 ALERT ReplicationLag IF pg_replication_lag_seconds > 30 LABELS {severity="critical"}
 ```
 
@@ -540,16 +1083,6 @@ ALERT ReplicationLag IF pg_replication_lag_seconds > 30 LABELS {severity="critic
 ## 10. Operation Runbook
 
 ### 10.1 Common Issues & Debugging
-
-- Inventory mismatch:
-  - Query: `SELECT * FROM audit_logs WHERE entity_type='warehouse' AND at>now()-interval '24h';`
-  - Check `warehouse_stock` vs `material_receipts`; re-run reconciliation job.
-  - [PLACEHOLDER: SCREENSHOT – INVENTORY]
-
-- PO not acknowledged:
-  - Check `integration_mappings`, vendor ack logs, webhook retries.
-  - cURL: `curl -sS -XGET $BASE/integrations/status?po=...`
-  - [PLACEHOLDER: SCREENSHOT – PO]
 
 - Splice/port allocation conflict:
   - Check locks: `SELECT * FROM ports WHERE status='reserved';`

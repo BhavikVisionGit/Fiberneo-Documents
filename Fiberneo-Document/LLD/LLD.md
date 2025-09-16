@@ -777,7 +777,7 @@ sequenceDiagram
 
   - (a) Area Home Page List
 
-   <div align="left">
+   <div align="Center">
     <image src="../Image/LLD_Images/AreaList.png" alt="User Login Request Flow" height="300" 
     style="background: transparent;">
     </div>
@@ -795,26 +795,26 @@ sequenceDiagram
 
   - (a) Link Home Page List
 
-   <div align="left">
+   <div align="centre">
     <image src="../Image/LLD_Images/LinkList.png" alt="User Login Request Flow" height="300" 
     style="background: transparent;">
     </div>
 
-- (b) Link Creation  
+- (b) Link Creation 
 
-| Before Create | Create Form |
-|---------------|-------------|
-| <img src="../Image/LLD_Images/LinkDraw.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> |
+    | Before Create | Create Form | After Create |
+    |---------------|-------------|--------------|
+    | <img src="../Image/LLD_Images/BeforeLinkCreate" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/LinkDraw.png" alt="After Create" height="250"> |
 
 
-- **Perform Survey**: create span, conduit , transmedia ,facilities, structures, equipment , obstacles , reference-point; view port/slot details.
+- **Perform Survey**: Performing roll-out task creating span, conduit , transmedia ,facilities on Area, Link or Site.
   - Actions: Add span, conduit , transmedia ,facilities, structures, equipment , obstacles , reference-point.
-  - Success: Equipment relationships valid; hierarchy graph loads.
+  - Success: all the Child Entity Created on that particular Area,Link or Site.
 
   <div align="left">
     <image src="../Image/LLD_Images/SiteList.png" alt="User Login Request Flow" height="300" 
     style="background: transparent;">
-    </div>
+  </div>
 
 - **Splicing & Port management UI**: Manage strands, ports, splices; visualize splice matrix.
   - Actions: Splice create/update, port assignment, loss budget.
@@ -1015,6 +1015,13 @@ FOR EACH ROW EXECUTE FUNCTION cdc_capture();
 
 ## Fiberneo API Details
 
+API Documentation
+Swagger JSON Reference:
+- [SCM  API Documentation](./Api-Doc-Swagger/)
+
+Java Docs
+- [SCM  JAVA Documentation](./Java-Doc/)
+
 This document summarizes REST endpoints for core entities exposed by the `fiberneo-api` module, formatted as concise tables. All paths are relative to the service base and secured via API Gateway.
 
 ### Area (`/Area`)
@@ -1175,15 +1182,133 @@ Recommendations: Version as `/api/v1`; cursor-based pagination for large map que
 
 ### 7.1 Permission Groups
 
-- **FIBERNEO_Admin**: Full access to all modules.
-- **Planner**: Create/Update Areas/Links/Sites; view facility/equipment; generate BOM/BOQ.
-- **Surveyor**: Perform survey endpoints; upload results; no destructive deletes.
-- **Constructor**: Construction pack tasks; material receipt upload.
-- **Tester**: Testing and review endpoints; loss budget reads.
-- **Operator**: Ready for Service operations; HOTO reads; monitoring.
-- **WarehouseUser**: Material request/receipt views; export.
-- **Viewer**: Read-only search/count/viewports.
-- **trial.user**: Limited demo read access.
+**Permission group Reference**:
+- [SCM Permission group](./FIBERNEO_Permission_Group/)
+### 7.2 Profile Template
+- [SCM Profile template](./FIBERNEO_Profile_Template/)
+
+# FiberNEO Backend Controller Permissions
+
+This document provides a comprehensive mapping of all permission scopes and their associated methods across all Controller classes in the FiberNEO Backend system.
+
+### Area Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_AREA_CREATE** | create, update, deleteById, softDelete, updateBlockDetails, updateAllBlockDetails, updateProjectStatus, updateDeploymentType |
+| **FIBERNEO_AREA_VIEW** | count, search, findById, findAllById, getLayer, getLayerByBbox, getEntityTypeCountsByStatus, getPriorityCountByDeploymentType,  getAreaTrends, getAreaByViewPort, getAreaCountByViewPort, getAreaByROWDetails, getAreaCountsByROWDetails, getServiceImpactedArea, getDataForAudit, downloadTemplate |
+| **FIBERNEO_AREA_CONFIGURATOR** | importData, export, importFile |
+
+### Structure Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_STRUCTURE_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_STRUCTURE_VIEW** | count, search, findById, findAllById, getStructureHistory, getStructureByViewPort, getStructureByCircuitId, getStructureDetailsByCircuitId |
+| **FIBERNEO_STRUCTURE_CONFIGURATOR** | bulkUpdate |
+
+### Conduit Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_CONDUIT_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_CONDUIT_VIEW** | count, search, findById, findAllById, getConduitByViewPort, getConduitByCircuitId, getConduitDetailsByCircuitId |
+| **FIBERNEO_CONDUIT_CONFIGURATOR** | bulkUpdate |
+
+### Circuit Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_CIRCUIT_CREATE** | create, update, deleteById |
+| **FIBERNEO_CIRCUIT_VIEW** | getCircuitByViewPort, count, search, findById, findAllById, lossBudgetByCircuitId, getAllDataByCircuitID |
+| **FIBERNEO_CIRCUIT_CONFIGURATOR** | bulkUpdate, generateFileByViewPort, generateFileByCircuitId, getCircuitReportById, uploadCSV, convertKmlandXMLToJson, importFile, downloadTemplate |
+
+### Equipment Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_EQUIPMENT_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_EQUIPMENT_VIEW** | count, search, findById, findAllById, getEquipmentByViewPort, getEquipmentByCircuitId, getEquipmentDetailsByCircuitId, getCircuitDetailsByEquipmentWithinBoundary, getEquipmentDetailsByLatLong, getODFDetailsByRouter, getNearestStructureFromEquipmentAndCustomerLocation, getSpanListBetweenTwoEquipment, getRouterDetailsByODF |
+| **FIBERNEO_EQUIPMENT_CONFIGURATOR** | bulkUpdate |
+
+### Facility Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_FACILITY_CREATE** | create, update, deleteById, softDelete, updateProjectStatus |
+| **FIBERNEO_FACILITY_VIEW** | count, search, findById, findAllById, getFacitlityTrends, getFacilityStatusWiseCounts, getFacilityTypeStatusWiseCounts, getFacilityCountsByCity, getFacilityCountsByState, getCountOfSiteDistribution, getFacilityTypeCountsByStatus, getLocationWiseFacilityStatusCount, getFacilityByViewPort, getFacilityCountByViewPort, getFacilityByCircuitId, getFacilityCountByCircuitId, getFacilityHierarchyDetails, getFacilityDetailsByCircuitId, findShortestPathByGoogleApi, getDataForAudit |
+| **FIBERNEO_FACILITY_CONFIGURATOR** | bulkUpdate, importData, export, createJobFromFacility, importFile, downloadTemplate |
+
+### Customer Site Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_CUSTOMER_SITE_CREATE** | create, update, deleteById, softDelete, updateProjectStatus |
+| **FIBERNEO_CUSTOMER_SITE_VIEW** | count, search, findById, findAllById, getCustomerSiteByViewPort, getCustomerSiteByCircuitId, getCustomerSiteDetailsByCircuitId, getCustomerSiteTrends, getCustomerSiteStatusWiseCounts, getCustomerSiteTypeStatusWiseCounts, getCustomerSiteCountsByCity, getCustomerSiteCountsByState, getCustomerSiteTypeCountsByStatus, getLocationWiseCustomerSiteStatusCount, getCustomerSiteCountByViewPort, getCustomerSiteCountByCircuitId, getDataForAudit |
+| **FIBERNEO_CUSTOMER_SITE_CONFIGURATOR** | bulkUpdate, importData, export, importFile, downloadTemplate |
+
+### Network Equipment Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_NETWORK_EQUIPMENT_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_NETWORK_EQUIPMENT_VIEW** | count, search, findById, findAllById, getNetworkEquipmentByViewPort, getNetworkEquipmentByCircuitId, getNetworkEquipmentDetailsByCircuitId |
+| **FIBERNEO_NETWORK_EQUIPMENT_CONFIGURATOR** | bulkUpdate |
+
+### Transmedia Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_TRANSMEDIA_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_TRANSMEDIA_VIEW** | count, search, findById, findAllById, getTransmediaByViewPort, getTransmediaByCircuitId, getTransmediaDetailsByCircuitId |
+| **FIBERNEO_TRANSMEDIA_CONFIGURATOR** | bulkUpdate |
+
+### Survey Condition Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_SURVEY_CONDITION_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_SURVEY_CONDITION_VIEW** | count, search, findById, findAllById, getSurveyConditionByViewPort, getSurveyConditionByCircuitId, getSurveyConditionDetailsByCircuitId |
+
+### Span Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_SPAN_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_SPAN_VIEW** | count, search, findById, findAllById, getSpanByViewPort, getSpanByCircuitId, getSpanDetailsByCircuitId |
+| **FIBERNEO_SPAN_CONFIGURATOR** | bulkUpdate |
+
+### Network Equipment Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_ROW_DETAILS_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_ROW_DETAILS_VIEW** | count, search, findById, findAllById, getRowDetailsByViewPort, getRowDetailsByCircuitId, getRowDetailsDetailsByCircuitId |
+| **FIBERNEO_ROW_DETAILS_CONFIGURATOR** | bulkUpdate |
+
+### Reference Point Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_REFERENCEPOINT_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_REFERENCEPOINT_VIEW** | count, search, findById, findAllById, getReferencepointByViewPort, getReferencepointByCircuitId, getReferencepointDetailsByCircuitId |
+| **FIBERNEO_REFERENCEPOINT_CONFIGURATOR** | bulkUpdate |
+
+### Obstacle Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_OBSTACLE_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_OBSTACLE_VIEW** | count, search, findById, findAllById, getObstacleByViewPort, getObstacleByCircuitId, getObstacleDetailsByCircuitId |
+| **FIBERNEO_OBSTACLE_CONFIGURATOR** | bulkUpdate |
+
+### Link Permission
+
+| Permission Scope | Methods/Operations |
+|------------------|-------------------|
+| **FIBERNEO_LINK_CREATE** | create, update, deleteById, softDelete |
+| **FIBERNEO_LINK_VIEW** | count, search, findById, findAllById, getLinkByViewPort, getLinkByCircuitId, getLinkDetailsByCircuitId |
+| **FIBERNEO_LINK_CONFIGURATOR** | bulkUpdate |
 
 API-to-permission mapping (examples):
 - `/Area/create` -> FIBERNEO_AREA_CREATE

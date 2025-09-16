@@ -1347,19 +1347,19 @@ API-to-permission mapping (examples):
 
 - **Metrics Monitoring**:
 <div align="center">
-<img src="../SCM_Img/metrics.png" alt="User Login Request Flow" height="500" 
+<img src="../Image/LLD_Images/metrics.png" alt="User Login Request Flow" height="500" 
 style="background: transparent;">
 </div>
 
 - **Logs Monitoring**:
 <div align="center">
-<img src="../SCM_Img/logs.png" alt="User Login Request Flow" height="500" 
+<img src="../Image/LLD_Images/logs.png" alt="User Login Request Flow" height="500" 
 style="background: transparent;">
 </div>
 
 - **APM Monitoring**:
 <div align="center">
-<img src="../SCM_Img/APM.png" alt="User Login Request Flow" height="500" 
+<img src="../Image/LLD_Images/APM.png" alt="User Login Request Flow" height="500" 
 style="background: transparent;">
 </div>
 

@@ -265,7 +265,6 @@ sequenceDiagram
   participant FN as FIBERNEO
   participant PRJ as Project/Workflow
   participant OSV as Other Service
-  participant MAT as Material Mgmt
   participant DB as DB
   Note over FN: Entity: Area/Link/Site
 
@@ -274,8 +273,6 @@ sequenceDiagram
   PRJ->>OSV: trigger tasks (assignments)
   OSV-->>PRJ: task events (completed/failed)
   PRJ-->>FN: callback status
-  FN->>MAT: Material Request (BOM/BOQ)
-  MAT-->>FN: ASN/Receipt
   FN->>DB: persist status, audit
 ```
 
@@ -442,8 +439,6 @@ sequenceDiagram
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
-  participant FN as Fiberneo MicroService
-  participant MM as Material Management MicroService
 
   U->>UI: Document Submission
   UI->>GW: POST projectTemplate/fiberlink/document-submission
@@ -474,7 +469,6 @@ sequenceDiagram
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
-  participant MM as Material Management MicroService
 
   U->>UI: Assign trenching and ducting
   UI->>GW: POST projectTemplate/area/assign-trenching-ducting
@@ -484,6 +478,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/trenching-ducting
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/area/assign-access-chamber-installation
   GW->>PG: Route
@@ -492,6 +487,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/access-chamber-installation
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/area/assign-cable-blowing
   GW->>PG: Route
@@ -500,6 +496,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/cable-blowing
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/area/assign-equipment-installation
   GW->>PG: Route
@@ -508,6 +505,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/equipment-installation
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/area/assign-splicing-task
   GW->>PG: Route
@@ -516,6 +514,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/splicing
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/area/assign-row
   GW->>PG: Route
@@ -524,6 +523,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/area/row
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 ```
 
 ### Perform Area Of Interest (AOI)
@@ -537,7 +537,6 @@ sequenceDiagram
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
-  participant MM as Material Management MicroService
 
   U->>UI: Assign for AOI Survey
   UI->>GW: POST projectTemplate/aoi/assign-survey
@@ -547,6 +546,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/aoi/survey
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
 
   UI->>GW: POST projectTemplate/aoi/review
   GW->>PG: Route
@@ -564,7 +564,6 @@ sequenceDiagram
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
-  participant MM as Material Management MicroService
 
   U->>UI: Assign for Site Readiness
   UI->>GW: POST projectTemplate/site/assign-readiness
@@ -574,6 +573,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/readiness
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD-->FN: Site Update
 
   UI->>GW: POST projectTemplate/site/review
   GW->>PG: Route
@@ -582,6 +582,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/readiness-completed
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD-->FN: Site Status Updated
 
   UI->>GW: POST projectTemplate/site/assign-installation
   GW->>PG: Route
@@ -590,6 +591,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/olt-installation
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD-->FN: Site Update
 
   UI->>GW: POST projectTemplate/site/review-installation
   GW->>PG: Route
@@ -598,6 +600,7 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/installation-completed
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD-->FN: Site Update
 
   UI->>GW: POST projectTemplate/site/atp
   GW->>PG: Route
@@ -626,6 +629,7 @@ sequenceDiagram
   UI->>GW: GET projectTemplate/site/in-service
   GW->>PG: Route
   PG->>BD: View In Service
+  BD-->FN: Status Workflow Updated
 ```
 
 ### Survey and Acquisition
@@ -639,7 +643,6 @@ sequenceDiagram
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
-  participant MM as Material Management MicroService
 
   U->>UI: Assign for Site Survey
   UI->>GW: POST projectTemplate/site/assign-survey
@@ -648,7 +651,8 @@ sequenceDiagram
 
   UI->>GW: POST projectTemplate/site/survey
   GW->>PG: Route
-  PG->>BD: Associate Form or Task
+  PG->>BD: Associate Form or Task\
+  BD->>FN: Data Updated
 
   UI->>GW: POST projectTemplate/site/review
   GW->>PG: Route
@@ -661,10 +665,12 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/acquisition
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Data Updated
 
   UI->>GW: POST projectTemplate/site/leasing
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Data Updated
 
   UI->>GW: POST projectTemplate/site/legal-approval
   GW->>PG: Route
@@ -673,10 +679,12 @@ sequenceDiagram
   UI->>GW: POST projectTemplate/site/financial-approval
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Data Updated
 
   UI->>GW: POST projectTemplate/site/ready-for-construction
   GW->>PG: Route
   PG->>BD: Associate Form or Task
+  BD->>FN: Status Updated
 ```
 
 ### Site Design and Construction
@@ -763,20 +771,50 @@ sequenceDiagram
 
 ## 3. Solution Features and User Interface
 
-- **Area/Link/Site Management**: Create/Edit geometry on map, attribute forms, stage transitions.
+- **Area Management**: Create/Edit Area geometry on map, attribute forms, stage transitions.
   - Primary actions: Create, Search (RSQL), Import/Export, Stage update, View counts.
   - Success: Entities persisted, visible on map, correct status and counts updated.
-  - [PLACEHOLDER: GUI SCREENSHOT – AREA/LINK/SITE]
 
-- **Span/Conduit/Transmedia Survey UI**: Draw spans, conduits; view transmedia overlays.
-  - Actions: Add spans, calculate lengths, deviations; viewport queries.
-  - Success: Correct topological consistency and persistence.
-  - [PLACEHOLDER: GUI SCREENSHOT – SURVEY UI]
+  - (a) Area Home Page List
 
-- **Structure & Equipment placement UI**: Place facilities, structures, network equipment; view port/slot details.
-  - Actions: Add facility, assign equipment, update ports.
+   <div align="left">
+    <image src="../Image/LLD_Images/AreaList.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
+
+  - (b) Area Creation
+
+    | Before Create | Create Form | After Create |
+    |---------------|-------------|--------------|
+    | <img src="../Image/LLD_Images/AreaBeforeCreate.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/AreaCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/AreaAfterCreate.png" alt="After Create" height="250"> |
+
+
+- **Link Management**: Create/Edit Link geometry on map, attribute forms, stage transitions.
+  - Primary actions: Create, Search (RSQL), Import/Export, Stage update, View counts.
+  - Success: Entities persisted, visible on map, correct status and counts updated.
+
+  - (a) Link Home Page List
+
+   <div align="left">
+    <image src="../Image/LLD_Images/LinkList.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
+
+- (b) Link Creation  
+
+| Before Create | Create Form |
+|---------------|-------------|
+| <img src="../Image/LLD_Images/LinkDraw.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> |
+
+
+- **Perform Survey**: create span, conduit , transmedia ,facilities, structures, equipment , obstacles , reference-point; view port/slot details.
+  - Actions: Add span, conduit , transmedia ,facilities, structures, equipment , obstacles , reference-point.
   - Success: Equipment relationships valid; hierarchy graph loads.
-  - [PLACEHOLDER: GUI SCREENSHOT – EQUIPMENT]
+
+  <div align="left">
+    <image src="../Image/LLD_Images/SiteList.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
 
 - **Splicing & Port management UI**: Manage strands, ports, splices; visualize splice matrix.
   - Actions: Splice create/update, port assignment, loss budget.

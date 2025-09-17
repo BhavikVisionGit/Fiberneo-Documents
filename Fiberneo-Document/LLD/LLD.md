@@ -848,45 +848,9 @@ sequenceDiagram
 - **Cache Invalidation**: Redis cache management across services
 - **Search Index Updates**: Elasticsearch synchronization
 
-Recommended patterns: synchronous REST for lookup/read; async Kafka for create/update side effects and cross-domain propagation.
-
-Sample message schema (Kafka `fiberneo.stage.events`):
-```json
-{
-  "eventId": "uuid",
-  "entityType": "Area|Link|CustomerSite",
-  "entityId": 123,
-  "previousStage": "Planning",
-  "newStage": "Review planning",
-  "actor": "user@org",
-  "occurredAt": "2025-09-11T10:00:00Z",
-  "correlationId": "uuid",
-  "metadata": {"projectId": 456}
-}
-```
-
 ## 5. Database Schema Design
 
 ### 5.1 ER Diagram and Module-wise Tables (>40 tables)
-
-Note: Names align to domain; keys abbreviated. Sample indexes suggested; actual DDL from schema file may vary.
-
-# Fiberneo Database Tables Documentation
-
-This document provides a comprehensive overview of all tables in the Fiberneo database, including primary keys, foreign keys, and key attributes.
-
-## Table of Contents
-1. [Core Geographic Tables](#core-geographic-tables)
-2. [Network Infrastructure Tables](#network-infrastructure-tables)
-3. [Physical Infrastructure Tables](#physical-infrastructure-tables)
-4. [Equipment and Device Tables](#equipment-and-device-tables)
-5. [Customer Management Tables](#customer-management-tables)
-6. [Circuit Management Tables](#circuit-management-tables)
-7. [Actual Implementation Tables](#actual-implementation-tables)
-8. [Deviation Management Tables](#deviation-management-tables)
-9. [Supporting Tables](#supporting-tables)
-
----
 
 ## Core Geographic Tables
 
@@ -1021,9 +985,31 @@ This document provides a comprehensive overview of all tables in the Fiberneo da
 - **Key Attributes**: `CODE`, `NAME`
 - **Description**: Transmission media (cables, fibers)
 
----
+### `REFERENCE_POINT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Reference points for navigation
 
-## Equipment and Device Tables
+### `OBSTACLE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Obstacles in network deployment
 
 ### `EQUIPMENT`
 - **PK**: `ID` (Varchar (36))
@@ -1041,6 +1027,10 @@ This document provides a comprehensive overview of all tables in the Fiberneo da
   - `LAST_MODIFIER` → `USER(Varchar (36))`
 - **Key Attributes**: `CODE`, `NAME`, `TYPE`, `LATITUDE`, `LONGITUDE`
 - **Description**: Network equipment and devices
+
+---
+
+## Equipment Related Tables
 
 ### `PORT`
 - **PK**: `ID` (Varchar (36))
@@ -1253,6 +1243,34 @@ This document provides a comprehensive overview of all tables in the Fiberneo da
 - **Key Attributes**: `NAME`, `LENGTH`, `NO_OF_FIBERS`, `FIBER_TYPE`
 - **Description**: Actual implemented transmission media
 
+### `ACTUAL_OBSTACLE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Actual implemented obstacles
+
+### `ACTUAL_REFERENCE_POINT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
+  - `ACTUAL_STRUCTURE_ID` → `ACTUAL_STRUCTURE(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Actual implemented reference points
 ---
 
 ## Deviation Management Tables
@@ -1341,6 +1359,34 @@ This document provides a comprehensive overview of all tables in the Fiberneo da
 - **Key Attributes**: `NAME`
 - **Description**: Transmission media change deviations
 
+### `OBSTACLE_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Obstacle change deviations
+
+### `REFERENCE_POINT_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
+  - `STRUCTURE_DEVIATION_ID` → `STRUCTURE_DEVIATION(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Reference point change deviations
+
 ---
 
 ## Supporting Tables
@@ -1402,111 +1448,7 @@ This document provides a comprehensive overview of all tables in the Fiberneo da
 - **Key Attributes**: `NAME`, `RULE_DEFINITION`
 - **Description**: Business rule templates
 
-### `REFERENCE_POINT`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Reference points for navigation
-
-### `OBSTACLE`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Obstacles in network deployment
-
 ---
-
-## Additional Tables
-
-### `ACTUAL_OBSTACLE`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Actual implemented obstacles
-
-### `ACTUAL_REFERENCE_POINT`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
-  - `ACTUAL_STRUCTURE_ID` → `ACTUAL_STRUCTURE(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Actual implemented reference points
-
-### `OBSTACLE_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Obstacle change deviations
-
-### `REFERENCE_POINT_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
-  - `STRUCTURE_DEVIATION_ID` → `STRUCTURE_DEVIATION(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Reference point change deviations
-
----
-
-## Summary
-
-This database contains **60+ tables** organized into several categories:
-
-1. **Core Geographic Tables** (4 tables) - Geographic hierarchy
-2. **Network Infrastructure Tables** (3 tables) - AREA, LINK, FACILITY
-3. **Physical Infrastructure Tables** (4 tables) - STRUCTURE, CONDUIT, SPAN, TRANSMEDIA
-4. **Equipment and Device Tables** (7 tables) - Equipment hierarchy and ports
-5. **Customer Management Tables** (3 tables) - Customer information and orders
-6. **Circuit Management Tables** (2 tables) - Circuit and segment management
-7. **Actual Implementation Tables** (6 tables) - Physical deployment tracking
-8. **Deviation Management Tables** (7 tables) - Change management
-9. **Supporting Tables** (10+ tables) - Users, vendors, attributes, alarms, etc.
-
-The database follows a comprehensive fiber network management system with clear separation between planned entities and their actual implementations, robust change management through deviation tables, and extensive geographic and customer management capabilities.
-
 
 ER Diagram (Mermaid excerpt):
 ```mermaid

@@ -823,24 +823,30 @@ sequenceDiagram
 
 ## 4. Integration Details
 
-- **Other Service (task orchestrator)**
-  - Events: `stage.changed`, `task.completed`, `task.failed`.
-  - Webhooks: `/integration/osv/callback` (POST) with `{ entityType, entityId, stage, status, timestamp }`.
-  - Topics: `fiberneo.stage.events` (Kafka).
+### 4.1 Internal Service Integrations
 
-- **ERP/Finance**
-  - Flows (external): PO/Invoice/GRN handled outside Fiberneo; we integrate via minimal REST/webhooks as needed. No local persistence.
+- **Fiber-Model Service**
+  - **Purpose**: Advanced analytics and data modeling for fiber network optimization
+  - **Capabilities**:
+    - Area analysis and installation rate optimization
+    - Competitor data analysis for strategic planning
+    - Fiber roll-out prioritization algorithms
+    - Network efficiency modeling and recommendations
 
-- **Logistics Provider**
-  - Shipment creation: `POST /logistics/shipments`.
-  - Tracking webhook: `POST /integration/logistics/tracking` with `{ shipmentId, status, eta }`.
+### 4.2 External Service Integrations
 
-- **Vendor APIs**
-  - ASN: `POST /vendors/{id}/asn`.
-  - Ack: `POST /vendors/{id}/ack`.
+- **File Storage Service**: Document and attachment management for project files, designs, and reports
+- **Analytics Service**: Business intelligence, reporting, and data visualization
+- **Project Management Service**: Project lifecycle management, task orchestration, and workflow coordination
+- **Builder Service**: Provide their Form,Page and List Support
+- **SLA Service**: Service level agreement monitoring, compliance tracking, and performance metrics
+- **Field Force Management Service**:Field technician management, work order dispatch, and real-time tracking
 
-- **Inventory sync**
-  - Pattern: Event-only integration for inventory-related updates originating from external MM/ERP; Fiberneo does not own stock or procurement data.
+### 4.3 Data Synchronization
+- **Event-Driven Architecture**: Asynchronous communication between services
+- **Database Replication**: Multi-region data synchronization
+- **Cache Invalidation**: Redis cache management across services
+- **Search Index Updates**: Elasticsearch synchronization
 
 Recommended patterns: synchronous REST for lookup/read; async Kafka for create/update side effects and cross-domain propagation.
 
@@ -865,162 +871,1355 @@ Sample message schema (Kafka `fiberneo.stage.events`):
 
 Note: Names align to domain; keys abbreviated. Sample indexes suggested; actual DDL from schema file may vary.
 
-- **A. Project & Survey**
-  - `projects` (pk id, name, type, owner_id, status, created_at, updated_at) idx: (type), (status)
-  - `project_versions` (pk id, project_id fk, version_no, notes, created_at)
-  - `areas` (pk id, name, code, entity_type, status, geom, priority, deployment_type, created_at, updated_at)
-  - `links` (pk id, name, code, status, deployment_type, length_m, geom, created_at)
-  - `customer_sites` (pk id, name, site_code, status, site_type, location point, address, created_at)
-  - `surveys` (pk id, entity_type, entity_id, stage, assigned_to, started_at, completed_at, status)
-  - `survey_segments` (pk id, survey_id fk, segment_type, geom, notes)
-  - `designs` (pk id, entity_type, entity_id, version, status, file_url)
+# Fiberneo Database Tables Documentation
 
-- **B. Network Model**
-  - `facilities` (pk id, facility_type, name, status, location point, area_id fk)
-  - `structures` (pk id, structure_type, status, geom, area_id fk)
-  - `equipment` (pk id, facility_id fk, equipment_type_id fk, name, status, serial_no)
-  - `equipment_types` (pk id, code, name, vendor, specs_json)
-  - `shelves` (pk id, equipment_id fk, name, order_no)
-  - `slots` (pk id, shelf_id fk, slot_no, status)
-  - `ports` (pk id, slot_id fk, port_no, media_type, status)
-  - `strands` (pk id, transmedia_id fk, strand_no, color, status)
-  - `splices` (pk id, location_id fk facility/structure, status, loss_db)
-  - `splice_records` (pk id, splice_id fk, a_strand_id fk, b_strand_id fk, loss_db, notes)
-  - `transmedia` (pk id, link_id fk, media_type, fiber_count, status, geom)
-  - `spans` (pk id, link_id fk, span_type, length_m, geom, status)
-  - `conduits` (pk id, span_id fk, size_mm, status, capacity)
-  - `reference_points` (pk id, name, type, location point, notes)
-  - `obstacles` (pk id, area_id fk, type, severity, geom, notes)
+This document provides a comprehensive overview of all tables in the Fiberneo database, including primary keys, foreign keys, and key attributes.
 
--- **C. Warehouse & Material (integration-facing)**
-  - Managed by external Material Management/ERP. Fiberneo does not persist procurement or stock tables; only integrates via APIs/events.
+## Table of Contents
+1. [Core Geographic Tables](#core-geographic-tables)
+2. [Network Infrastructure Tables](#network-infrastructure-tables)
+3. [Physical Infrastructure Tables](#physical-infrastructure-tables)
+4. [Equipment and Device Tables](#equipment-and-device-tables)
+5. [Customer Management Tables](#customer-management-tables)
+6. [Circuit Management Tables](#circuit-management-tables)
+7. [Actual Implementation Tables](#actual-implementation-tables)
+8. [Deviation Management Tables](#deviation-management-tables)
+9. [Supporting Tables](#supporting-tables)
 
-- **D. Workflow & Status**
-  - `entity_status_history` (pk id, entity_type, entity_id, from_stage, to_stage, actor, at)
-  - `assignments` (pk id, entity_type, entity_id, task, assignee, status, due_at)
+---
 
-- **E. GIS Support**
-  - `geo_layers` (pk id, entity_type, entity_id, layer_type, geojson jsonb, created_at)
-  - `deviations` (pk id, entity_type, entity_id, deviation_type, details jsonb, created_at)
+## Core Geographic Tables
 
-- **F. Import/Export**
-  - `imports` (pk id, entity_type, file_name, format, status, created_by, created_at)
-  - `exports` (pk id, entity_type, format, filter, status, requested_by, requested_at)
+### `PRIMARY_GEO_L1`
+- **PK**: `ID` (int UNSIGNED)
+- **Key Attributes**: `NAME`, `CODE`
+- **Description**: Primary geographic level 1 (Country/Region)
 
-- **G. Users & RBAC**
-  - `users` (pk id, username, email, phone, status, region)
-  - `roles` (pk id, code, name)
-  - `permissions` (pk id, code, name)
-  - `role_permissions` (pk role_id fk, permission_id fk)
-  - `user_roles` (pk user_id fk, role_id fk)
-  - `access_tokens` (pk id, user_id fk, token_hash, created_at, expires_at)
+### `PRIMARY_GEO_L2`
+- **PK**: `ID` (int UNSIGNED)
+- **FK**: `PRIMARY_GEO_L1_ID_FK` → `PRIMARY_GEO_L1(ID)`
+- **Key Attributes**: `NAME`, `CODE`
+- **Description**: Primary geographic level 2 (State/Province)
 
-- **H. Audit & Events**
-  - `audit_logs` (pk id, actor, action, entity_type, entity_id, payload jsonb, at)
-  - `change_history` (pk id, table_name, pk_value, before jsonb, after jsonb, at)
-  - `cdc_metadata` (pk id, source_table, last_lsn, updated_at)
-  - `event_store` (pk id, type, payload jsonb, status, published_at)
+### `PRIMARY_GEO_L3`
+- **PK**: `ID` (int UNSIGNED)
+- **FK**: `PRIMARY_GEO_L2_ID_FK` → `PRIMARY_GEO_L2(ID)`
+- **Key Attributes**: `NAME`, `CODE`
+- **Description**: Primary geographic level 3 (City/District)
 
-- **I. Config & Lookup**
-  - `config_items` (pk id, scope, key, value, updated_at)
-  - `lookup_values` (pk id, type, code, value, active)
-  - `region_zones` (pk id, region, state, city, zone)
+### `PRIMARY_GEO_L4`
+- **PK**: `ID` (int UNSIGNED)
+- **FK**: `PRIMARY_GEO_L3_ID_FK` → `PRIMARY_GEO_L3(ID)`
+- **Key Attributes**: `NAME`, `CODE`
+- **Description**: Primary geographic level 4 (Area/District)
 
-- **J. Integration**
-  - `integrations` (pk id, name, type, config jsonb, active)
-  - `integration_mappings` (pk id, domain, source_code, target_code)
-  - `webhook_subscriptions` (pk id, subscriber, topic, callback_url, secret, active)
+---
+
+## Network Infrastructure Tables
+
+### `AREA`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `AOI_ID` → `AREA_OF_INTEREST(Varchar (36))`
+  - `CIRCUIT_ID` → `CIRCUIT(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `SIZE`, `BOUNDARY_JSON`, `LATITUDE`, `LONGITUDE`
+- **Description**: Geographic areas for network planning and management
+
+### `LINK`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `AOI_ID` → `AREA_OF_INTEREST(Varchar (36))`
+  - `CIRCUIT_ID` → `CIRCUIT(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `DISTANCE_COVERED`, `BOUNDARY_JSON`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
+- **Description**: Network links connecting different points
+
+### `FACILITY`
+- **PK**: `id` (Varchar (36))
+- **FK**: 
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `CIRCUIT_ID` → `CIRCUIT(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `CODE`, `ADDRESS`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Physical facilities/sites in the network
+
+---
+
+## Physical Infrastructure Tables
+
+### `STRUCTURE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `CODE`, `LATITUDE`, `LONGITUDE`
+- **Description**: Physical structures supporting network infrastructure
+
+### `CONDUIT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `SPAN_ID` → `SPAN(Varchar (36))`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
+- **Description**: Conduits for cable installation
+
+### `SPAN`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`
+- **Description**: Network spans between points
+
+### `TRANSMEDIA`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
+  - `SEGMENT_ID` → `SEGMENT(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`
+- **Description**: Transmission media (cables, fibers)
+
+---
+
+## Equipment and Device Tables
+
+### `EQUIPMENT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `SHELF_ID` → `SHELF(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `TYPE`, `LATITUDE`, `LONGITUDE`
+- **Description**: Network equipment and devices
+
+### `PORT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
+  - `STRAND_ID` → `STRAND(Varchar (36))`
+  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Equipment ports for connections
+
+### `STRAND`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
+  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Individual fiber strands
+
+### `FLOOR`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Facility floors
+
+### `ROOM`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FLOOR_ID` → `FLOOR(Varchar (36))`
+  - `PARENT_ROOM_ID` → `ROOM(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Rooms within facilities
+
+### `RACK`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `ROOM_ID` → `ROOM(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Equipment racks
+
+### `SHELF`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `RACK_ID` → `RACK(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Shelves within racks
+
+---
+
+## Customer Management Tables
+
+### `CUSTOMER_INFO`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `EMAIL`, `PHONE`
+- **Description**: Customer information
+
+### `CUSTOMER_ORDER`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CUSTOMER_ID` → `CUSTOMER_INFO(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `ORDER_NUMBER`
+- **Description**: Customer orders
+
+### `CUSTOMER_SITE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CUSTOMER_ORDER_ID` → `CUSTOMER_ORDER(Varchar (36))`
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `ADDRESS`, `LATITUDE`, `LONGITUDE`
+- **Description**: Customer sites/locations
+
+---
+
+## Circuit Management Tables
+
+### `CIRCUIT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `SPAN_ID` → `SPAN(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `CODE`
+- **Description**: Network circuits
+
+### `SEGMENT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `LINK_ID` → `LINK(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Network segments
+
+---
+
+## Actual Implementation Tables
+
+### `ACTUAL_FACILITY`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Actual implemented facilities
+
+### `ACTUAL_CONDUIT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `ACTUAL_SPAN_ID` → `ACTUAL_SPAN(Varchar (36))`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
+- **Description**: Actual implemented conduits
+
+### `ACTUAL_EQUIPMENT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `SHELF_ID` → `SHELF(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `TYPE`, `LATITUDE`, `LONGITUDE`
+- **Description**: Actual implemented equipment
+
+### `ACTUAL_STRUCTURE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `CIRCUIT_ID` → `CIRCUIT(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `CODE`, `NAME`, `LATITUDE`, `LONGITUDE`
+- **Description**: Actual implemented structures
+
+### `ACTUAL_SPAN`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `SPAN_ID` → `SPAN(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LENGTH`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
+- **Description**: Actual implemented spans
+
+### `ACTUAL_TRANSMEDIA`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `ACTUAL_CONDUIT_ID` → `ACTUAL_CONDUIT(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LENGTH`, `NO_OF_FIBERS`, `FIBER_TYPE`
+- **Description**: Actual implemented transmission media
+
+---
+
+## Deviation Management Tables
+
+### `FACILITY_DEVIATION`
+- **PK**: `id` (Varchar (36))
+- **FK**: 
+  - `FACILITY_ID` → `FACILITY(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Facility change deviations
+
+### `CONDUIT_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
+  - `SPAN_DEVIATION_ID` → `SPAN_DEVIATION(Varchar (36))`
+  - `VENDOR` → `VENDOR(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Conduit change deviations
+
+### `EQUIPMENT_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Equipment change deviations
+
+### `STRUCTURE_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Structure change deviations
+
+### `SPAN_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `SPAN_ID` → `SPAN(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Span change deviations
+
+### `TRANSMEDIA_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `CONDUIT_DEVIATION_ID` → `CONDUIT_DEVIATION(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Transmission media change deviations
+
+---
+
+## Supporting Tables
+
+### `USER`
+- **PK**: `ID` (Varchar (36))
+- **Key Attributes**: `NAME`, `EMAIL`, `USERNAME`
+- **Description**: System users
+
+### `VENDOR`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `CODE`, `CONTACT_INFO`
+- **Description**: Vendors and suppliers
+
+### `AREA_OF_INTEREST`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `TERRAIN_TYPE`, `ELEVATION_FROM_SEA_LEVEL`, `GEOGRAPHICAL_FEATURES`, `LAND_USE_TYPE`
+- **Description**: Areas of interest for network planning
+
+### `ATTRIBUTE`
+- **PK**: `ID` (Varchar (36))
+- **Key Attributes**: `NAME`, `TYPE`, `VALUE`
+- **Description**: Generic attributes for entities
+
+### `NETWORK_EQUIPMENT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
+  - `ATTRIBUTE_ID` → `ATTRIBUTE(Varchar (36))`
+- **Key Attributes**: `NAME`, `TYPE`
+- **Description**: Network equipment configurations
+
+### `ALARM_LIBRARY`
+- **PK**: `ID` (Varchar (36))
+- **Key Attributes**: `NAME`, `DESCRIPTION`, `SEVERITY`
+- **Description**: Alarm definitions library
+
+### `ALARM_DETAILS`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `ALARM_LIBRARY_ID` → `ALARM_LIBRARY(Varchar (36))`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `ENTITY_TYPE`
+- **Description**: Alarm instances and details
+
+### `RULE_TEMPLATE`
+- **PK**: `id` (Varchar (36))
+- **FK**: 
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `RULE_DEFINITION`
+- **Description**: Business rule templates
+
+### `REFERENCE_POINT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Reference points for navigation
+
+### `OBSTACLE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Obstacles in network deployment
+
+---
+
+## Additional Tables
+
+### `ACTUAL_OBSTACLE`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `LINK_ID` → `LINK(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Actual implemented obstacles
+
+### `ACTUAL_REFERENCE_POINT`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
+  - `ACTUAL_STRUCTURE_ID` → `ACTUAL_STRUCTURE(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
+- **Description**: Actual implemented reference points
+
+### `OBSTACLE_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
+  - `AREA_ID` → `AREA(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Obstacle change deviations
+
+### `REFERENCE_POINT_DEVIATION`
+- **PK**: `ID` (Varchar (36))
+- **FK**: 
+  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
+  - `STRUCTURE_DEVIATION_ID` → `STRUCTURE_DEVIATION(Varchar (36))`
+  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
+  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
+  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
+  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
+  - `CREATOR` → `USER(Varchar (36))`
+  - `LAST_MODIFIER` → `USER(Varchar (36))`
+- **Key Attributes**: `NAME`
+- **Description**: Reference point change deviations
+
+---
+
+## Summary
+
+This database contains **60+ tables** organized into several categories:
+
+1. **Core Geographic Tables** (4 tables) - Geographic hierarchy
+2. **Network Infrastructure Tables** (3 tables) - AREA, LINK, FACILITY
+3. **Physical Infrastructure Tables** (4 tables) - STRUCTURE, CONDUIT, SPAN, TRANSMEDIA
+4. **Equipment and Device Tables** (7 tables) - Equipment hierarchy and ports
+5. **Customer Management Tables** (3 tables) - Customer information and orders
+6. **Circuit Management Tables** (2 tables) - Circuit and segment management
+7. **Actual Implementation Tables** (6 tables) - Physical deployment tracking
+8. **Deviation Management Tables** (7 tables) - Change management
+9. **Supporting Tables** (10+ tables) - Users, vendors, attributes, alarms, etc.
+
+The database follows a comprehensive fiber network management system with clear separation between planned entities and their actual implementations, robust change management through deviation tables, and extensive geographic and customer management capabilities.
+
 
 ER Diagram (Mermaid excerpt):
 ```mermaid
 erDiagram
-  AREAS ||--o{ LINKS : contains
-  LINKS ||--o{ SPANS : has
-  LINKS ||--o{ TRANSMEDIA : carries
-  TRANSMEDIA ||--o{ STRANDS : includes
-  STRANDS ||--o{ SPLICE_RECORDS : joined_in
-  FACILITIES ||--o{ EQUIPMENT : hosts
-  EQUIPMENT ||--o{ SHELVES : has
-  SHELVES ||--o{ SLOTS : has
-  SLOTS ||--o{ PORTS : exposes
-  CUSTOMER_SITES }o--|| AREAS : located_in
-  PROJECTS ||--o{ DESIGNS : versions
-  %% BOM/Material entities are external; no local persistence
-```
+    %% Core Geographic Tables
+    PRIMARY_GEO_L1 {
+        int ID PK
+        varchar NAME
+        varchar CODE
+    }
+    
+    PRIMARY_GEO_L2 {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        int PRIMARY_GEO_L1_ID_FK FK
+    }
+    
+    PRIMARY_GEO_L3 {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        int PRIMARY_GEO_L2_ID_FK FK
+    }
+    
+    PRIMARY_GEO_L4 {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        int PRIMARY_GEO_L3_ID_FK FK
+    }
 
-[PLACEHOLDER: ER_DIAGRAM_PNG_URL]
+    %% Core Network Infrastructure
+    AREA {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int SIZE
+        varchar BOUNDARY_JSON
+        decimal LATITUDE
+        decimal LONGITUDE
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int AOI_ID FK
+        int CIRCUIT_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    LINK {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int DISTANCE_COVERED
+        varchar BOUNDARY_JSON
+        decimal START_LAT
+        decimal START_LONG
+        decimal END_LAT
+        decimal END_LONG
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int AOI_ID FK
+        int CIRCUIT_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    FACILITY {
+        int id PK
+        varchar NAME
+        varchar CODE
+        varchar ADDRESS
+        decimal LATITUDE
+        decimal LONGITUDE
+        enum TYPE
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int LINK_ID FK
+        int CIRCUIT_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Physical Infrastructure
+    STRUCTURE {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        decimal LATITUDE
+        decimal LONGITUDE
+        int AREA_ID FK
+        int CONDUIT_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    CONDUIT {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        decimal START_LAT
+        decimal START_LONG
+        decimal END_LAT
+        decimal END_LONG
+        int AREA_ID FK
+        int LINK_ID FK
+        int SPAN_ID FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    SPAN {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int AREA_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    TRANSMEDIA {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int AREA_ID FK
+        int LINK_ID FK
+        int CONDUIT_ID FK
+        int SEGMENT_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Equipment and Devices
+    EQUIPMENT {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        enum TYPE
+        decimal LATITUDE
+        decimal LONGITUDE
+        int FACILITY_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int SHELF_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    PORT {
+        int ID PK
+        varchar NAME
+        int FACILITY_ID FK
+        int EQUIPMENT_ID FK
+        int STRAND_ID FK
+        int TRANSMEDIA_ID FK
+    }
+
+    STRAND {
+        int ID PK
+        varchar NAME
+        int EQUIPMENT_ID FK
+        int TRANSMEDIA_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Physical Infrastructure Hierarchy
+    FLOOR {
+        int ID PK
+        varchar NAME
+        int FACILITY_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ROOM {
+        int ID PK
+        varchar NAME
+        int FLOOR_ID FK
+        int PARENT_ROOM_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    RACK {
+        int ID PK
+        varchar NAME
+        int FACILITY_ID FK
+        int ROOM_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    SHELF {
+        int ID PK
+        varchar NAME
+        int RACK_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Reference Points and Obstacles
+    REFERENCE_POINT {
+        int ID PK
+        varchar NAME
+        decimal LATITUDE
+        decimal LONGITUDE
+        int STRUCTURE_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    OBSTACLE {
+        int ID PK
+        varchar NAME
+        decimal LATITUDE
+        decimal LONGITUDE
+        int AREA_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Customer Management
+    CUSTOMER_INFO {
+        int ID PK
+        varchar NAME
+        varchar EMAIL
+        varchar PHONE
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    CUSTOMER_ORDER {
+        int ID PK
+        varchar ORDER_NUMBER
+        int CUSTOMER_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    CUSTOMER_SITE {
+        int ID PK
+        varchar NAME
+        varchar ADDRESS
+        decimal LATITUDE
+        decimal LONGITUDE
+        int CUSTOMER_ORDER_ID FK
+        int FACILITY_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Circuit Management
+    CIRCUIT {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        int SPAN_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    SEGMENT {
+        int ID PK
+        varchar NAME
+        int LINK_ID FK
+    }
+
+    %% Actual Implementation Tables (Physical Deployments)
+    ACTUAL_FACILITY {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        decimal LATITUDE
+        decimal LONGITUDE
+        int FACILITY_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ACTUAL_CONDUIT {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        decimal START_LAT
+        decimal START_LONG
+        decimal END_LAT
+        decimal END_LONG
+        int CONDUIT_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int ACTUAL_SPAN_ID FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ACTUAL_EQUIPMENT {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        enum TYPE
+        decimal LATITUDE
+        decimal LONGITUDE
+        int EQUIPMENT_ID FK
+        int FACILITY_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int SHELF_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ACTUAL_STRUCTURE {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        decimal LATITUDE
+        decimal LONGITUDE
+        int STRUCTURE_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int CIRCUIT_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ACTUAL_SPAN {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int SPAN_ID FK
+        int LINK_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ACTUAL_TRANSMEDIA {
+        int ID PK
+        varchar CODE
+        varchar NAME
+        int TRANSMEDIA_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int ACTUAL_CONDUIT_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Deviation Tables (Change Management)
+    FACILITY_DEVIATION {
+        int id PK
+        varchar NAME
+        int FACILITY_ID FK
+        int LINK_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    CONDUIT_DEVIATION {
+        int ID PK
+        varchar NAME
+        int CONDUIT_ID FK
+        int SPAN_DEVIATION_ID FK
+        int VENDOR FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    EQUIPMENT_DEVIATION {
+        int ID PK
+        varchar NAME
+        int EQUIPMENT_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    STRUCTURE_DEVIATION {
+        int ID PK
+        varchar NAME
+        int STRUCTURE_ID FK
+        int AREA_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    SPAN_DEVIATION {
+        int ID PK
+        varchar NAME
+        int SPAN_ID FK
+        int AREA_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    TRANSMEDIA_DEVIATION {
+        int ID PK
+        varchar NAME
+        int TRANSMEDIA_ID FK
+        int AREA_ID FK
+        int LINK_ID FK
+        int CONDUIT_DEVIATION_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    OBSTACLE_DEVIATION {
+        int ID PK
+        varchar NAME
+        int OBSTACLE_ID FK
+        int AREA_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    REFERENCE_POINT_DEVIATION {
+        int ID PK
+        varchar NAME
+        int REFERENCE_POINT_ID FK
+        int STRUCTURE_DEVIATION_ID FK
+        int PRIMARY_GEO_L1_FK FK
+        int PRIMARY_GEO_L2_FK FK
+        int PRIMARY_GEO_L3_FK FK
+        int PRIMARY_GEO_L4_FK FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Supporting Tables
+    USER {
+        int ID PK
+        varchar NAME
+        varchar EMAIL
+        varchar USERNAME
+    }
+
+    VENDOR {
+        int ID PK
+        varchar NAME
+        varchar CODE
+        varchar CONTACT_INFO
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    AREA_OF_INTEREST {
+        int ID PK
+        varchar TERRAIN_TYPE
+        decimal ELEVATION_FROM_SEA_LEVEL
+        varchar GEOGRAPHICAL_FEATURES
+        varchar LAND_USE_TYPE
+        int AREA_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    ATTRIBUTE {
+        int ID PK
+        varchar NAME
+        varchar TYPE
+        varchar VALUE
+    }
+
+    NETWORK_EQUIPMENT {
+        int ID PK
+        varchar NAME
+        varchar TYPE
+        int EQUIPMENT_ID FK
+        int ATTRIBUTE_ID FK
+    }
+
+    ALARM_LIBRARY {
+        int ID PK
+        varchar NAME
+        varchar DESCRIPTION
+        varchar SEVERITY
+    }
+
+    ALARM_DETAILS {
+        int ID PK
+        varchar ALARM_ID
+        varchar DESCRIPTION
+        int ALARM_LIBRARY_ID FK
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    RULE_TEMPLATE {
+        int id PK
+        varchar NAME
+        text RULE_DEFINITION
+        int CREATOR FK
+        int LAST_MODIFIER FK
+    }
+
+    %% Relationships
+    PRIMARY_GEO_L1 ||--o{ PRIMARY_GEO_L2 : "contains"
+    PRIMARY_GEO_L2 ||--o{ PRIMARY_GEO_L3 : "contains"
+    PRIMARY_GEO_L3 ||--o{ PRIMARY_GEO_L4 : "contains"
+
+    AREA ||--o{ LINK : "contains"
+    AREA ||--o{ FACILITY : "contains"
+    AREA ||--o{ STRUCTURE : "contains"
+    AREA ||--o{ CONDUIT : "contains"
+    AREA ||--o{ SPAN : "contains"
+    AREA ||--o{ TRANSMEDIA : "contains"
+    AREA ||--o{ EQUIPMENT : "contains"
+    AREA ||--o{ OBSTACLE : "contains"
+
+    LINK ||--o{ FACILITY : "connects"
+    LINK ||--o{ CONDUIT : "contains"
+    LINK ||--o{ TRANSMEDIA : "contains"
+    LINK ||--o{ EQUIPMENT : "contains"
+
+    FACILITY ||--o{ FLOOR : "contains"
+    FACILITY ||--o{ EQUIPMENT : "houses"
+    FACILITY ||--o{ PORT : "provides"
+    FACILITY ||--o{ RACK : "contains"
+
+    FLOOR ||--o{ ROOM : "contains"
+    ROOM ||--o{ RACK : "contains"
+    RACK ||--o{ SHELF : "contains"
+    SHELF ||--o{ EQUIPMENT : "holds"
+
+    STRUCTURE ||--o{ REFERENCE_POINT : "has"
+    STRUCTURE ||--o{ CONDUIT : "supports"
+
+    CONDUIT ||--o{ TRANSMEDIA : "contains"
+    SPAN ||--o{ CONDUIT : "contains"
+    SEGMENT ||--o{ TRANSMEDIA : "contains"
+
+    EQUIPMENT ||--o{ PORT : "provides"
+    EQUIPMENT ||--o{ STRAND : "contains"
+    TRANSMEDIA ||--o{ STRAND : "contains"
+
+    CUSTOMER_INFO ||--o{ CUSTOMER_ORDER : "places"
+    CUSTOMER_ORDER ||--o{ CUSTOMER_SITE : "defines"
+    CUSTOMER_SITE ||--o{ FACILITY : "located_at"
+
+    CIRCUIT ||--o{ SPAN : "uses"
+    CIRCUIT ||--o{ AREA : "serves"
+    CIRCUIT ||--o{ LINK : "traverses"
+    CIRCUIT ||--o{ FACILITY : "connects"
+
+    %% Actual Implementation Relationships
+    FACILITY ||--o{ ACTUAL_FACILITY : "implemented_as"
+    CONDUIT ||--o{ ACTUAL_CONDUIT : "implemented_as"
+    EQUIPMENT ||--o{ ACTUAL_EQUIPMENT : "implemented_as"
+    STRUCTURE ||--o{ ACTUAL_STRUCTURE : "implemented_as"
+    SPAN ||--o{ ACTUAL_SPAN : "implemented_as"
+    TRANSMEDIA ||--o{ ACTUAL_TRANSMEDIA : "implemented_as"
+
+    %% Deviation Relationships
+    FACILITY ||--o{ FACILITY_DEVIATION : "has_deviations"
+    CONDUIT ||--o{ CONDUIT_DEVIATION : "has_deviations"
+    EQUIPMENT ||--o{ EQUIPMENT_DEVIATION : "has_deviations"
+    STRUCTURE ||--o{ STRUCTURE_DEVIATION : "has_deviations"
+    SPAN ||--o{ SPAN_DEVIATION : "has_deviations"
+    TRANSMEDIA ||--o{ TRANSMEDIA_DEVIATION : "has_deviations"
+    OBSTACLE ||--o{ OBSTACLE_DEVIATION : "has_deviations"
+    REFERENCE_POINT ||--o{ REFERENCE_POINT_DEVIATION : "has_deviations"
+
+    %% User and Vendor Relationships
+    USER ||--o{ AREA : "creates"
+    USER ||--o{ LINK : "creates"
+    USER ||--o{ FACILITY : "creates"
+    USER ||--o{ STRUCTURE : "creates"
+    USER ||--o{ CONDUIT : "creates"
+    USER ||--o{ EQUIPMENT : "creates"
+    USER ||--o{ TRANSMEDIA : "creates"
+
+    VENDOR ||--o{ FACILITY : "supplies"
+    VENDOR ||--o{ STRUCTURE : "supplies"
+    VENDOR ||--o{ CONDUIT : "supplies"
+    VENDOR ||--o{ EQUIPMENT : "supplies"
+    VENDOR ||--o{ TRANSMEDIA : "supplies"
+    VENDOR ||--o{ SPAN : "supplies"
+
+    %% Geographic Relationships
+    PRIMARY_GEO_L1 ||--o{ AREA : "located_in"
+    PRIMARY_GEO_L2 ||--o{ AREA : "located_in"
+    PRIMARY_GEO_L3 ||--o{ AREA : "located_in"
+    PRIMARY_GEO_L4 ||--o{ AREA : "located_in"
+
+    PRIMARY_GEO_L1 ||--o{ LINK : "traverses"
+    PRIMARY_GEO_L2 ||--o{ LINK : "traverses"
+    PRIMARY_GEO_L3 ||--o{ LINK : "traverses"
+    PRIMARY_GEO_L4 ||--o{ LINK : "traverses"
+
+    PRIMARY_GEO_L1 ||--o{ FACILITY : "located_in"
+    PRIMARY_GEO_L2 ||--o{ FACILITY : "located_in"
+    PRIMARY_GEO_L3 ||--o{ FACILITY : "located_in"
+    PRIMARY_GEO_L4 ||--o{ FACILITY : "located_in"
+
+    %% Area of Interest
+    AREA_OF_INTEREST ||--o{ AREA : "describes"
+    AREA_OF_INTEREST ||--o{ LINK : "describes"
+
+    %% Equipment and Network
+    EQUIPMENT ||--o{ NETWORK_EQUIPMENT : "configured_as"
+    ATTRIBUTE ||--o{ NETWORK_EQUIPMENT : "defines"
+
+    %% Alarm Management
+    ALARM_LIBRARY ||--o{ ALARM_DETAILS : "defines"
+
+    %% Rule Management
+    RULE_TEMPLATE ||--o{ TRANSMEDIA : "applies_to"
+    RULE_TEMPLATE ||--o{ ACTUAL_TRANSMEDIA : "applies_to"
+```
 
 ### 5.2 CDC Configuration
 
-- Strategy: Debezium PostgreSQL connector capturing changes from operational tables into Kafka topics; downstream sink to data lake/DWH; selective replication for heavy GIS fields (geojson truncated or stored by reference).
-- Template (examples):
-
-| source_table | primary_key | target_table | fields_to_replicate | frequency | transform_rules | retention |
-| --- | --- | --- | --- | --- | --- | --- |
-| areas | id | dwh.areas | id,name,code,status,priority,deployment_type,geom | real-time | mask(name?) | 7y |
-| links | id | dwh.links | id,name,status,deployment_type,length_m,geom | real-time | none | 7y |
-| customer_sites | id | dwh.customer_sites | id,name,site_code,status,location | real-time | none | 7y |
-| entity_status_history | id | dwh.entity_status_history | all | real-time | none | 7y |
-
-Debezium connector snippet (placeholder):
-```json
-{
-  "name": "fiberneo-pg-connector",
-  "config": {
-    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-    "database.hostname": "${PG_HOST}",
-    "database.port": "5432",
-    "database.user": "${PG_USER}",
-    "database.password": "${PG_PASSWORD}",
-    "database.dbname": "fiberneo",
-    "plugin.name": "pgoutput",
-    "slot.name": "fiberneo_slot",
-    "publication.autocreate.mode": "filtered",
-    "table.include.list": "public.areas,public.links,public.customer_sites,public.entity_status_history",
-    "tombstones.on.delete": "false",
-    "topic.prefix": "fiberneo",
-    "heartbeat.interval.ms": "10000"
-  }
-}
-```
-
-SQL trigger example to append to a `cdc_outbox` table (alternative to Debezium):
-```sql
-CREATE TABLE IF NOT EXISTS cdc_outbox (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  table_name text NOT NULL,
-  pk_value text NOT NULL,
-  op char(1) NOT NULL,
-  payload jsonb NOT NULL,
-  occurred_at timestamptz NOT NULL DEFAULT now(),
-  processed boolean NOT NULL DEFAULT false
-);
-
-CREATE OR REPLACE FUNCTION cdc_capture() RETURNS trigger AS $$
-DECLARE v_payload jsonb;
-BEGIN
-  IF (TG_OP = 'INSERT') THEN v_payload = to_jsonb(NEW);
-  ELSIF (TG_OP = 'UPDATE') THEN v_payload = jsonb_build_object('before', to_jsonb(OLD), 'after', to_jsonb(NEW));
-  ELSE v_payload = to_jsonb(OLD); END IF;
-  INSERT INTO cdc_outbox(table_name, pk_value, op, payload)
-  VALUES (TG_TABLE_NAME, COALESCE(NEW.id::text, OLD.id::text), substr(TG_OP,1,1), v_payload);
-  RETURN NEW;
-END; $$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_cdc_areas AFTER INSERT OR UPDATE OR DELETE ON areas
-FOR EACH ROW EXECUTE FUNCTION cdc_capture();
-```
-
-[PLACEHOLDER: DEBEZIUM_CONNECTOR_YAML]
+- ** User CDC is Done from Platform Database for User of Platform to Fiberneo User Table
+- ** Primary_Geo (L1,L2,L3,L4): Geometry Level Data Entry from Platfrom Data for Country , State , City , District level Data. 
 
 ## Fiberneo API Details
 
 API Documentation
 Swagger JSON Reference:
-- [SCM  API Documentation](./Api-Doc-Swagger/)
+- [Fiberneo  API Documentation](./Fiberneo-Document/Api-Doc-Swagger/)
 
 Java Docs
-- [SCM  JAVA Documentation](./Java-Doc/)
+- [Fiberneo JAVA Documentation](./Fiberneo-Document/Java-Doc/)
 
 This document summarizes REST endpoints for core entities exposed by the `fiberneo-api` module, formatted as concise tables. All paths are relative to the service base and secured via API Gateway.
 
@@ -1310,30 +2509,6 @@ This document provides a comprehensive mapping of all permission scopes and thei
 | **FIBERNEO_LINK_VIEW** | count, search, findById, findAllById, getLinkByViewPort, getLinkByCircuitId, getLinkDetailsByCircuitId |
 | **FIBERNEO_LINK_CONFIGURATOR** | bulkUpdate |
 
-API-to-permission mapping (examples):
-- `/Area/create` -> FIBERNEO_AREA_CREATE
-- `/Area/search` -> FIBERNEO_AREA_VIEW
-- `/Link/create` -> FIBERNEO_LINK_CREATE
-- `/CustomerSite/updateProjectStatus` -> FIBERNEO_CUSTOMER_SITE_CREATE
-- `/Facility/bulkUpdate` -> FIBERNEO_FACILITY_CONFIGURATOR
-
-### 7.2 Profile Template (JSON)
-
-```json
-{
-  "userId": 123,
-  "roles": ["Planner", "Surveyor"],
-  "permissions": ["FIBERNEO_AREA_CREATE","FIBERNEO_LINK_VIEW"],
-  "abac": {
-    "region": ["North","West"],
-    "vendor": ["VendorA","VendorB"],
-    "warehouse": [101, 102],
-    "areaIds": [1,2,3],
-    "siteTypes": ["OLT","POP"]
-  },
-  "scope": {"read": "region", "write": "areaIds"}
-}
-```
 
 ## 8. Monitoring & Alerting
 

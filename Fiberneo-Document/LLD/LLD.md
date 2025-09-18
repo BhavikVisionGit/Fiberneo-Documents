@@ -57,8 +57,7 @@
 - **Objective**: Design the Fiberneo core microservice for Roll Out to manage planning, survey, construction, testing, HOTO, and in-service management across Area, Link, and Site entities. Responsibilities include: Create/Update Area, Link, CustomerSite (Site); manage projects and stage transitions; perform Planning, Survey, Construction, Testing, Review; Splicing and Port management; and orchestrated workflow status updates.
 - **Scope owned by FIBERNEO**: Domain entities and operations for Area, Link, CustomerSite, Span, Conduit, Transmedia, Facility, Equipment, Structure, Obstacles, ReferencePoint; workflow status tracking; spatial map operations; splicing/ports/strands; read-only inventory views where needed; data export/import; CDC to data lake; API and RBAC.
 - **Out of scope / owned by external systems**:
-  - **Other Service (Task Orchestrator/Workflow)**: triggers tasks/flows, approvals, SLA timers, complex BPMN.
-  - **Material Management/ERP**: Material master, purchase orders, invoices, vendor settlement, ASN, warehouse ledger.
+  - **Other Service (Project Service/Material management)**: triggers tasks/flows, approvals, Material Provider.
   - **Builder/Vendor Management**: Contractor onboarding, vendor scoring, agreements.
   - **SLA**: End-to-end SLA policy definition and enforcement engine.
 
@@ -2225,10 +2224,10 @@ erDiagram
 
 API Documentation
 Swagger JSON Reference:
-- [Fiberneo  API Documentation](./Fiberneo-Document/Api-Doc-Swagger/)
+- [Fiberneo  API Documentation](Fiberneo-Document/Api-Doc-Swagger/)
 
 Java Docs
-- [Fiberneo JAVA Documentation](./Fiberneo-Document/Java-Doc/)
+- [Fiberneo JAVA Documentation](Fiberneo-Document/Java-Doc/11-09-2025/)
 
 This document summarizes REST endpoints for core entities exposed by the `fiberneo-api` module, formatted as concise tables. All paths are relative to the service base and secured via API Gateway.
 

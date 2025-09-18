@@ -65,8 +65,7 @@
 ### Assumptions & Constraints
 
 - Primary DB: PostgreSQL 14+; PostGIS for spatial operations where applicable.
-- Message broker: Kafka for async events and CDC sinks.
-- CDC via Debezium (Kafka Connect) or logical replication to data lake/warehouse.
+- Message broker: CDC sinks.
 - API gateway provides authentication (OIDC/JWT) and rate limiting.
 - Mobile/Web use same REST APIs; pagination and filtering via RSQL-like filters.
 - Secrets via Vault/KMS; TLS everywhere; PII/geo data classified and protected.
@@ -200,15 +199,13 @@ flowchart TD
     direction TB
     DB[("🗄️ PostgreSQL / PostGIS")]
     Cache[("⚡ Redis")]
-    MQ[["📨 Kafka"]]
     Obj[("🗂️ Object Storage")]
     DWH[("📊 Data Lake / Warehouse")]
   end
   Repo --> DB
   BL --> Cache
   BL --> Obj
-  Outbox --> MQ
-  MQ --> DWH
+  Outbox --> DWH
 
   %% External Systems (VERTICAL)
   subgraph External["External Services"]
@@ -226,7 +223,7 @@ flowchart TD
 ```
 
 Component interactions:
-- API Layer exposes REST. Business Services enforce rules, call repositories, publish Kafka events, and call Feign clients toward external services. CDC tailing via Debezium streams to DWH.
+- API Layer exposes REST. Business Services enforce rules, call repositories and call Feign clients toward external services. CDC tailing via Debezium streams to DWH.
 
 ### 2.3 Application Flow - Sequence Diagrams
 
@@ -242,7 +239,6 @@ sequenceDiagram
   participant API as fiberneo-api
   participant SVC as Business Service (fiberneo-service)
   participant DB as PostgreSQL/PostGIS
-  participant MQ as Kafka (Outbox/CDC)
 
   U->>UI: Create/Update entity (Area/Link/Site)
   UI->>GW: POST /api/{entity}/create
@@ -813,15 +809,17 @@ sequenceDiagram
 
   - (a) Project Trigger Page - Survey Project Overview
 
-  <div align="center">
+
+  <div align="left">
     <image src="../Image/LLD_Images/ProjectTrigger.png" alt="Project Trigger - Survey Project Page" height="400" 
     style="background: transparent;">
   </div>
 
   - (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
 
-  <div align="center">
-    <image src="../Image/LLD_Images/PerformSurvey.png" alt="Survey Map Interface - Area Survey" height="400" 
+
+  <div align="left">
+    <image src="../Image/LLD_Images/PerformSurvey.png" alt="Survey Map Interface - Area Survey" height="300" 
     style="background: transparent;">
   </div>
 
@@ -836,8 +834,8 @@ sequenceDiagram
 
   - (c) Conduit Creation Process
 
-  <div align="center">
-    <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="300" 
+  <div align="left">
+    <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
     style="background: transparent;">
   </div>
 
@@ -2393,9 +2391,9 @@ Recommendations: Version as `/api/v1`; cursor-based pagination for large map que
 ### 7.1 Permission Groups
 
 **Permission group Reference**:
-- [SCM Permission group](./FIBERNEO_Permission_Group/)
+- [Fiberneo Permission group](./FIBERNEO_Permission_Group/)
 ### 7.2 Profile Template
-- [SCM Profile template](./FIBERNEO_Profile_Template/)
+- [Fiberneo Profile template](./FIBERNEO_Profile_Template/)
 
 # FiberNEO Backend Controller Permissions
 
@@ -2539,7 +2537,7 @@ style="background: transparent;">
 
 - **Logs Monitoring**:
 <div align="center">
-<img src="../Image/LLD_Images/logs.png" alt="User Login Request Flow" height="500" 
+<img src="../Image/LLD_Images/Logs.png" alt="User Login Request Flow" height="500" 
 style="background: transparent;">
 </div>
 
@@ -2620,11 +2618,10 @@ style="background: transparent;">
 ## 11. Appendices
 
 ### 11.1 Technology Stack
-- **Backend**: Java 17, Spring Boot 3.x, Spring Cloud
+- **Backend**: Java 21, Spring Boot 3.x, Spring Cloud
 - **Database**: MySQL 8.1
 - **Cache**: Redis
 - **Search**: Elasticsearch
-- **Message Queue**: Apache Kafka
 - **Container**: Docker, Kubernetes
 - **API Gateway**: Spring Cloud Gateway
 - **Security**: OAuth2, JWT
@@ -2633,17 +2630,11 @@ style="background: transparent;">
 
 ### 11.2 Database Schema Statistics
 - **Total Tables**: 40+ tables across all modules
-- **Material Management**: 15+ tables
-- **Procurement Management**: 10+ tables
-- **Warehouse Management**: 8+ tables
-- **Logistics Management**: 7+ tables
+- **Fiber-Model: 10+ tables across all modules
 
 ### 11.3 API Statistics
 - **Total Endpoints**: 50+ REST endpoints
-- **Material Management**: 15+ endpoints
-- **Procurement Management**: 15+ endpoints
-- **Warehouse Management**: 12+ endpoints
-- **Logistics Management**: 8+ endpoints
+- **Fiber-Model Management**: 15+ endpoints
 
 ### 11.4 Security Features
 - **Authentication**: OAuth2 with JWT tokens

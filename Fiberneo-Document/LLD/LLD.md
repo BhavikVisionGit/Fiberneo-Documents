@@ -918,7 +918,7 @@ sequenceDiagram
 
 ## 5. Database Schema Design
 
-### 5.1 ER Diagram and Module-wise Tables (>40 tables)
+### 5.1 ER Diagram and Tables (>40 tables)
 
 ## Core Geographic Tables
 
@@ -2226,10 +2226,10 @@ erDiagram
 
 API Documentation
 Swagger JSON Reference:
-- [Fiberneo  API Documentation](Fiberneo-Document/Api-Doc-Swagger/)
+- [Fiberneo API Documentation](https://github.com/BhavikVisionGit/Fiberneo-Documents/blob/main/Fiberneo-Document/Api-Doc-Swagger/)
 
 Java Docs
-- [Fiberneo JAVA Documentation](Fiberneo-Document/Java-Doc/11-09-2025/)
+- [Fiberneo JAVA Documentation](https://github.com/BhavikVisionGit/Fiberneo-Documents/tree/main/Fiberneo-Document/Java-Doc/11-09-2025/)
 
 This document summarizes REST endpoints for core entities exposed by the `fiberneo-api` module, formatted as concise tables. All paths are relative to the service base and secured via API Gateway.
 
@@ -2392,7 +2392,7 @@ Recommendations: Version as `/api/v1`; cursor-based pagination for large map que
 ### 7.1 Permission Groups
 
 **Permission group Reference**:
-- [Fiberneo Permission group](./FIBERNEO_Permission_Group/)
+- [Fiberneo Permission group](https://github.com/BhavikVisionGit/Fiberneo-Documents/tree/main/Fiberneo-Document/LLD/LLD_Data)
 ### 7.2 Profile Template
 - [Fiberneo Profile template](./FIBERNEO_Profile_Template/)
 

@@ -795,7 +795,7 @@ sequenceDiagram
 
   - (a) Link Home Page List
 
-   <div align="centre">
+   <div align="Center">
     <image src="../Image/LLD_Images/LinkList.png" alt="User Login Request Flow" height="300" 
     style="background: transparent;">
     </div>
@@ -807,19 +807,88 @@ sequenceDiagram
     | <img src="../Image/LLD_Images/BeforeLinkCreate.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/LinkDraw.png" alt="After Create" height="250"> |
 
 
-- **Perform Survey**: Performing roll-out task creating span, conduit , transmedia ,facilities on Area, Link or Site.
-  - Actions: Add span, conduit , transmedia ,facilities, structures, equipment , obstacles , reference-point.
-  - Success: all the Child Entity Created on that particular Area,Link or Site.
+- **Perform Survey**: Performing roll-out task creating Span, Conduit, Transmedia, Facilities on Area or Link.
+  - Actions: Add span, conduit, transmedia, facilities, structures, equipment, obstacles, reference-point.
+  - Success: All the Child Entity Created on that particular Area, Link.
 
-  <div align="left">
-    <image src="../Image/LLD_Images/SiteList.png" alt="User Login Request Flow" height="300" 
+  - (a) Project Trigger Page - Survey Project Overview
+
+  <div align="center">
+    <image src="../Image/LLD_Images/ProjectTrigger.png" alt="Project Trigger - Survey Project Page" height="400" 
     style="background: transparent;">
   </div>
 
-- **Splicing & Port management UI**: Manage strands, ports, splices; visualize splice matrix.
-  - Actions: Splice create/update, port assignment, loss budget.
-  - Success: Loss budget within threshold; conflicts prevented.
-  - [PLACEHOLDER: GUI SCREENSHOT – SPLICING]
+  - (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
+
+  <div align="center">
+    <image src="../Image/LLD_Images/PerformSurvey.png" alt="Survey Map Interface - Area Survey" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Survey Process Details:**
+  - **Map Interface**: Interactive map showing the survey area where users can perform survey tasks
+  - **Side Panel**: Provides icons and tools to create respective entities during survey
+  - **Entity Creation Hierarchy**: 
+    - **Span Creation**: First step - draw span on the map
+    - **Conduit Creation**: Hover over existing span to add conduit within the span
+    - **Transmedia Creation**: Add transmedia after conduit creation
+    - **Additional Entities**: Create facilities, structures, equipment, obstacles, and reference points as needed
+
+  - (c) Conduit Creation Process
+
+  <div align="center">
+    <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="300" 
+    style="background: transparent;">
+  </div>
+
+  **Survey Workflow:**
+  1. **Project Selection**: Select Area/Link Choose survey project from Project Trigger Option
+  2. **Area Selection**: Select specific area/link for survey on the map
+  3. **Entity Creation**: Use side panel tools to create network infrastructure entities
+  4. **Hierarchical Creation**: Follow the proper sequence for entity creation:
+   - **Primary Sequence**: Facility → Span → Structure → Conduit → Equipment → Transmedia
+   - **Flexible Creation**: Obstacle and ReferencePoint can be created at any time after Structure creation
+  5. **Data Validation**: Ensure all required entities are properly created and linked
+  6. **Survey Completion**: Submit survey data for review and approval
+
+- **Permit Dashboard**: Permission management and tracking system for survey entities.
+
+  <div align="center">
+    <image src="../Image/LLD_Images/PermitDashBoard.png" alt="Permit Dashboard - Permission Management" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Permit Dashboard Features:**
+  - **Permission Tracking**: Monitor permission status for Area, Link, and Site entities
+  - **Authority Integration**: Check with local government authorities for installation permissions
+  - **Progress Monitoring**: Track permission application progress and approval status
+  - **Compliance Management**: Ensure all physical entities have proper authorization before installation
+
+- **Area Prioritization**: Strategic area selection and prioritization system.
+
+  <div align="center">
+    <image src="../Image/LLD_Images/AreaPriotization.png" alt="Area Prioritization - Strategic Selection" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Area Prioritization Features:**
+  - **Profitability Analysis**: Evaluate areas based on customer density and revenue potential
+  - **Deployment Feasibility**: Assess ease of fiber roll-out and infrastructure requirements
+  - **Demand Assessment**: Identify high-demand areas for priority deployment
+  - **Strategic Planning**: Optimize resource allocation across multiple areas in a region or city
+
+- **Customer Service Monitoring**: Real-time monitoring and maintenance system for deployed infrastructure.
+
+  <div align="center">
+    <image src="../Image/LLD_Images/CustomerServiceMonitoring.png" alt="Customer Service Monitoring - Device Management" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Customer Service Monitoring Features:**
+  - **Device Performance**: Monitor deployed devices for load, speed, and operational status
+  - **Alert System**: Real-time notifications for device failures, outages, or damage
+  - **Maintenance Tracking**: Schedule and track maintenance activities for network equipment
+  - **Service Quality**: Ensure optimal performance and customer satisfaction
 
 ## 4. Integration Details
 

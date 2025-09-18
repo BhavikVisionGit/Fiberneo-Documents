@@ -63,7 +63,7 @@
 
 ### Assumptions & Constraints
 
-- Primary DB: PostgreSQL 14+; PostGIS for spatial operations where applicable.
+- Primary DB: MYSQL 14+; PostGIS for spatial operations where applicable.
 - Message broker: CDC sinks.
 - API gateway provides authentication (OIDC/JWT) and rate limiting.
 - Mobile/Web use same REST APIs; pagination and filtering via RSQL-like filters.
@@ -101,6 +101,7 @@ graph TD
     BLD[Builder/Vendor Service]
     SLA[SLA Service]
     NOTIF[Notification Service]
+    FFM[Field Force Service]
   end
 
   GW --> FN
@@ -109,9 +110,10 @@ graph TD
   FN <--> BLD
   FN <--> SLA
   FN --> NOTIF
+  FN --> FFM
 
   subgraph Data
-    DB[(PostgreSQL + PostGIS)]
+    DB[(MYSQL + PostGIS)]
   end
 
   FN <--> DB
@@ -196,7 +198,7 @@ flowchart TD
   %% Data Stores & Infra
   subgraph Data["Infra & Data Stores"]
     direction TB
-    DB[("🗄️ PostgreSQL / PostGIS")]
+    DB[("🗄️ MYSQL / PostGIS")]
     Cache[("⚡ Redis")]
     Obj[("🗂️ Object Storage")]
     DWH[("📊 Data Lake / Warehouse")]
@@ -237,7 +239,7 @@ sequenceDiagram
   participant GW as API Gateway
   participant API as fiberneo-api
   participant SVC as Business Service (fiberneo-service)
-  participant DB as PostgreSQL/PostGIS
+  participant DB as MYSQL/PostGIS
 
   U->>UI: Create/Update entity (Area/Link/Site)
   UI->>GW: POST /api/{entity}/create

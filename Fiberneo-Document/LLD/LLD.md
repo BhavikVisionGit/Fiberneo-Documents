@@ -46,30 +46,26 @@
 
 11. [Appendices](#11-appendices)
     - 11.1 [Technology Stack](#111-technology-stack)
-    - 11.2 [Database Schema Statistics](#112-database-schema-statistics)
-    - 11.3 [API Statistics](#113-api-statistics)
-    - 11.4 [Security Features](#114-security-features)
+    - 11.2 [Security Features](#114-security-features)
 
 ## 1. Introduction
 
 ### 1.1 Objective and Scope
 
 - **Objective**: Design the Fiberneo core microservice for Roll Out to manage planning, survey, construction, testing, HOTO, and in-service management across Area, Link, and Site entities. Responsibilities include: Create/Update Area, Link, CustomerSite (Site); manage projects and stage transitions; perform Planning, Survey, Construction, Testing, Review; Splicing and Port management; and orchestrated workflow status updates.
-- **Scope owned by FIBERNEO**: Domain entities and operations for Area, Link, CustomerSite, Span, Conduit, Transmedia, Facility, Equipment, Structure, Obstacles, ReferencePoint; workflow status tracking; spatial map operations; splicing/ports/strands; read-only inventory views where needed; data export/import; CDC to data lake; API and RBAC.
+- **Scope owned by Fiberneo**: Domain entities and operations for Area, Link, CustomerSite, Span, Conduit, Transmedia, Facility, Equipment, Structure, Obstacles, ReferencePoint; workflow status tracking; spatial map operations; splicing/ports/strands; read-only inventory views where needed; data export/import; API.
 - **Out of scope / owned by external systems**:
   - **Other Service (Project Service/Material management)**: triggers tasks/flows, approvals, Material Provider.
-  - **Builder/Vendor Management**: Contractor onboarding, vendor scoring, agreements.
   - **SLA**: End-to-end SLA policy definition and enforcement engine.
 
 ### Assumptions & Constraints
 
-- Primary DB: MYSQL 14+; PostGIS for spatial operations where applicable.
+- Primary DB: MYSQL 14+ 
 - Message broker: CDC sinks.
 - API gateway provides authentication (OIDC/JWT) and rate limiting.
-- Mobile/Web use same REST APIs; pagination and filtering via RSQL-like filters.
+- Mobile/Web use same REST APIs; pagination and filtering.
 - Secrets via Vault/KMS; TLS everywhere; PII/geo data classified and protected.
 - Infrastructure: containerized (Kubernetes); horizontal scaling; read replicas for reporting.
-- Constraints: Some modules read-only mirrors of master data from ERP; eventual consistency for cross-service views; heavy GIS operations batched/asynchronous.
 
 ## 2. Solution Design
 
@@ -91,7 +87,7 @@ graph TD
 
   %% Fiberneo highlighted separately
   subgraph FNS[Fiberneo Core]
-    FN[FIBERNEO Microservice]
+    FN[Fiberneo Microservice]
   end
 
   %% Other microservices grouped
@@ -113,122 +109,16 @@ graph TD
   FN --> FFM
 
   subgraph Data
-    DB[(MYSQL + PostGIS)]
+    DB[(MYSQL)]
   end
 
   FN <--> DB
 
 ```
 
-[PLACEHOLDER: ARCHITECTURE_DIAGRAM_PNG_URL]
+### 2.2 Application Flow - Sequence Diagrams
 
-### 2.2 Component Diagram
-
-```mermaid
-flowchart TD
-  %% Clients
-  subgraph Clients
-    direction TB
-    Web["💻 Web UI"]
-    Mobile["📱 Mobile App"]
-  end
-
-  %% Gateway
-  subgraph Gateway["API Gateway / Swagger UI"]
-    Auth["AuthN/Z, Routing, Rate Limit"]
-  end
-  Web --> Auth
-  Mobile --> Auth
-
-  %% Backend (stacked vertically)
-  subgraph Backend["Fiberneo Backend (multi-module)"]
-    direction TB
-
-    subgraph API["fiberneo-api"]
-      Ctrls["REST Controllers"]
-      DTO["DTO Models & Validation"]
-      Feign["Feign Clients"]
-    end
-
-    subgraph APP["fiberneo-app"]
-      Boot["Spring Boot App"]
-      Config["Profiles & Config"]
-      Sched["Jobs/Schedulers"]
-    end
-
-    subgraph SVC["fiberneo-service"]
-      BL["Business Services"]
-      Dom["Domain Models"]
-      Repo["JPA Repositories"]
-      Intg["Integrations & Adapters"]
-      Outbox["Outbox / CDC Publisher"]
-    end
-  end
-
-  %% Flow inside backend
-  Auth --> Ctrls
-  DTO --> Ctrls
-  APP --> Ctrls
-  Ctrls --> BL
-  BL --> Dom
-  BL --> Repo
-  BL --> Intg
-  Intg --> Feign
-
-  %% Functional Domains (VERTICAL)
-  subgraph Domains["Managed Components"]
-    direction TB
-    Area["📍 Area / Link / Site"]
-    Survey["📝 Survey & Planning"]
-    Constr["🏗️ Construction & Testing"]
-    Splice["🔌 Splicing / Ports / Strands"]
-    Inv["📦 Inventory View"]
-    ExpImp["⬆️⬇️ Export / Import"]
-    CDC["🔄 Data Sync / CDC"]
-  end
-  BL --> Area
-  BL --> Survey
-  BL --> Constr
-  BL --> Splice
-  BL --> Inv
-  BL --> ExpImp
-  BL --> CDC
-  CDC --> Outbox
-
-  %% Data Stores & Infra
-  subgraph Data["Infra & Data Stores"]
-    direction TB
-    DB[("🗄️ MYSQL / PostGIS")]
-    Cache[("⚡ Redis")]
-    Obj[("🗂️ Object Storage")]
-    DWH[("📊 Data Lake / Warehouse")]
-  end
-  Repo --> DB
-  BL --> Cache
-  BL --> Obj
-  Outbox --> DWH
-
-  %% External Systems (VERTICAL)
-  subgraph External["External Services"]
-    direction TB
-    PRJ["📂 Project/Workflow Service"]
-    MAT["🏭 Material Mgmt / ERP"]
-    VEND["🌐 Vendor APIs"]
-    NOTIF["🔔 Notification Service"]
-  end
-  Intg <--> PRJ
-  Intg <--> MAT
-  Intg <--> VEND
-  BL --> NOTIF
-
-```
-
-Component interactions:
-- API Layer exposes REST. Business Services enforce rules, call repositories and call Feign clients toward external services. CDC tailing via Debezium streams to DWH.
-
-### 2.3 Application Flow - Sequence Diagrams
-
-#### 2.3.1 Entity Creation Flow
+#### 2.2.1 Entity Creation Flow
 
 #### Create Area, Link and Site on UI on Map
 
@@ -239,7 +129,7 @@ sequenceDiagram
   participant GW as API Gateway
   participant API as fiberneo-api
   participant SVC as Business Service (fiberneo-service)
-  participant DB as MYSQL/PostGIS
+  participant DB as MYSQL
 
   U->>UI: Create/Update entity (Area/Link/Site)
   UI->>GW: POST /api/{entity}/create
@@ -253,13 +143,13 @@ sequenceDiagram
   GW-->>UI: Render entity on map
 ```
 
-#### 2.3.2 Project Stage Transition Flow
+#### 2.2.2 Project Stage Transition Flow
 
 #### Project Flows (high-level)
 
 ```mermaid
 sequenceDiagram
-  participant FN as FIBERNEO
+  participant FN as Fiberneo
   participant PRJ as Project/Workflow
   participant OSV as Other Service
   participant DB as DB
@@ -273,13 +163,42 @@ sequenceDiagram
   FN->>DB: persist status, audit
 ```
 
-### Area Planning Survey (also for Link Planning Survey)
+2.2.3 Area Project Flow
+
+#### (a) Perform Area Of Interest (AOI) 
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
+  participant GW as API Gateway
+  participant PG as Project MicroService
+  participant BD as Builder MicroService
+  participant FN as Fiberneo MicroService
+
+  U->>UI: Assign for AOI Survey
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: assign survey
+  PG->>BD: Assign to User
+
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: perform survey
+  PG->>BD: Associate Form or Task
+  BD->>FN: Associate API Calls
+
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review survey
+  PG->>BD: Associate Form or Task
+```
+
+##### (b) Area Planning Survey
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
@@ -287,89 +206,87 @@ sequenceDiagram
   participant MM as Material Management MicroService
 
   U->>UI: Initiate Planning
-  UI->>GW: POST projectTemplate/area/planning
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: planning
   PG->>BD: Associate Form or Task
   BD->>FN: Update Data
 
   U->>UI: Review Planning
-  UI->>GW: POST projectTemplate/area/review-planning
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review planning
   PG->>BD: Associate Form or Task
 
   U->>UI: Ready for Survey
-  UI->>GW: POST projectTemplate/area/ready-for-survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: approve for Survey
   PG->>BD: Associate Form or Task
 
   U->>UI: Assign for Survey
-  UI->>GW: POST projectTemplate/area/assign-for-survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: assign
   PG->>BD: Assign to User
 
   U->>UI: Perform Survey
-  UI->>GW: POST projectTemplate/area/perform-survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: perform
   PG->>BD: User performs task → create child entities (Span, Conduit, Facility, Equipment, Structure, Obstacle, ReferencePoint)
   BD->>FN: Create Child Entity
 
   U->>UI: Review Survey
-  UI->>GW: POST projectTemplate/area/review-survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review survey
   PG->>BD: Associate Form or Task
 
   U->>UI: Survey Completed
-  UI->>GW: POST projectTemplate/area/survey-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: complete survey
   PG->>BD: Associate Form or Task
 
   U->>UI: Perform Detail Design
-  UI->>GW: POST projectTemplate/area/perform-detail-design
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: perform design
   PG->>BD: Associate Form or Task
 
   U->>UI: Review Design
-  UI->>GW: POST projectTemplate/area/design-review
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review design
   PG->>BD: Associate Form or Task
 
   U->>UI: Design Completed
-  UI->>GW: POST projectTemplate/area/design-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: complete design
   PG->>BD: Associate Form or Task
 
   U->>UI: Generate BOM
-  UI->>GW: POST projectTemplate/area/generate-bom
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: generate bom
   PG->>BD: Associate Form or Task
   BD->>MM: Generate Bill of Material
 
   U->>UI: BOQ/BOM Finalisation
-  UI->>GW: POST projectTemplate/area/boq-bom-finalisation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: finalize bom
   PG->>BD: Associate Form or Task
 
   U->>UI: Material Request
-  UI->>GW: POST projectTemplate/area/material-request
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: request material
   PG->>BD: Associate Form or Task
   BD->>MM: Material Request
 
   U->>UI: Permission Received
-  UI->>GW: POST projectTemplate/area/permission-received
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: receive permission
   PG->>BD: Associate Form or Task
 ```
 
-#### 2.3.3 Construction and Testing Flow
-
-### Area Installation and Construction
+#### (c) Area Installation and Construction
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
@@ -377,320 +294,252 @@ sequenceDiagram
   participant MM as Material Management MicroService
 
   U->>UI: Upload material delivery receipt
-  UI->>GW: POST projectTemplate/area/upload-material-delivery-receipt
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: upload receipt
   PG->>BD: Associate Form or Task
   BD->>MM: Material Delivery Receipt
 
-  UI->>GW: POST projectTemplate/area/ready-for-construction
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: ready construction
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/as-built-capture
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: capture as-built
   PG->>BD: Associate Form or Task
   BD->>FN: Update Data
 
-  UI->>GW: POST projectTemplate/area/construction-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: complete construction
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/assign-for-testing
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: assign testing
   PG->>BD: Assign to User
 
-  UI->>GW: POST projectTemplate/area/testing
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: perform testing
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/review-testing
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review testing
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/testing-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task-completed
+  GW->>PG: complete testing
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/ready-for-service
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskready-for-service
+  GW->>PG: ready service
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/work-completion-certificate
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskwork-completion-certificate
+  GW->>PG: issue certificate
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/area/ready-for-hoto
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskready-for-hoto
+  GW->>PG: ready hoto
   PG->>BD: Associate Form or Task
 ```
 
-#### 2.3.4 Handover (HOTO) and Ready for Service Flow
+#### 2.2.4 Link Project Task
 
-### FiberLink HOTO
+##### (a) Link Planning and Survey
+
+The Link Planning and Survey process follows the exact same workflow and structure as the Area Planning and Survey module.
+
+This includes:
+
+- **Survey Initiation**: Defining the start and end points of the link.
+- **Route Planning**: Mapping the link path using available base maps, network layers, and route constraints.
+- **Feasibility Study**: Identifying physical and environmental challenges (e.g., road crossings, water bodies, or private land).
+- **Field Survey & Data Collection**: Capturing accurate GIS data, alignment details, and site photographs.
+- **Validation & Approval**: Reviewing collected data, verifying technical feasibility, and approving the survey for the next phase.
+
+👉 **Essentially, all task stages, data flow, and approval checkpoints mirror the existing Area Planning and Survey workflow, ensuring consistency and standardization.**
+
+##### (b) Link Installation and Construction
+
+The Link Installation and Construction process is aligned with the Area Installation and Construction workflow.
+
+This includes:
+
+- **Work Order Creation**: Generating BOQs, assigning contractors, and setting execution timelines.
+- **Material Planning & Dispatch**: Identifying required materials (e.g., fiber cables, conduits) and coordinating logistics.
+- **Execution on Ground**: Implementing trenching, ducting, cable laying, jointing, and other link-related civil and fiber works.
+- **Quality & Safety Checks**: Ensuring construction meets technical standards and safety guidelines.
+- **Testing & Commissioning**: Conducting OTDR testing, link validation, and final acceptance.
+- **Documentation & Handover**: Capturing as-built data, uploading test reports, and closing the task with approvals.
+
+#### (c) FiberLink HOTO
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
 
   U->>UI: Document Submission
-  UI->>GW: POST projectTemplate/fiberlink/document-submission
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskdocument-submission
+  GW->>PG: submit documents
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/fiberlink/verification
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskverification
+  GW->>PG: verify documents
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/fiberlink/final-handover-signoff
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskfinal-handover-signoff
+  GW->>PG: signoff handover
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/fiberlink/ready-for-service
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskready-for-service
+  GW->>PG: ready service
   PG->>BD: Associate Form or Task
 ```
 
-### Area Construction Pack
+#### (d) OLT Installation and Commissioning (Site)
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
-  participant GW as API Gateway
-  participant PG as Project MicroService
-  participant BD as Builder MicroService
-  participant FN as Fiberneo MicroService
-
-  U->>UI: Assign trenching and ducting
-  UI->>GW: POST projectTemplate/area/assign-trenching-ducting
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/trenching-ducting
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/area/assign-access-chamber-installation
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/access-chamber-installation
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/area/assign-cable-blowing
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/cable-blowing
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/area/assign-equipment-installation
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/equipment-installation
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/area/assign-splicing-task
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/splicing
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/area/assign-row
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/area/row
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-```
-
-### Perform Area Of Interest (AOI)
-
-```mermaid
-sequenceDiagram
-  autonumber
-  participant U as User
-  participant UI as Web/Mobile UI
-  participant GW as API Gateway
-  participant PG as Project MicroService
-  participant BD as Builder MicroService
-  participant FN as Fiberneo MicroService
-
-  U->>UI: Assign for AOI Survey
-  UI->>GW: POST projectTemplate/aoi/assign-survey
-  GW->>PG: Route
-  PG->>BD: Assign to User
-
-  UI->>GW: POST projectTemplate/aoi/survey
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Associate API Calls
-
-  UI->>GW: POST projectTemplate/aoi/review
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-```
-
-### OLT Installation and Commissioning (Site)
-
-```mermaid
-sequenceDiagram
-  autonumber
-  participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
 
   U->>UI: Assign for Site Readiness
-  UI->>GW: POST projectTemplate/site/assign-readiness
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskassign-readiness
+  GW->>PG: assign readiness
   PG->>BD: Assign to User
 
-  UI->>GW: POST projectTemplate/site/readiness
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskreadiness
+  GW->>PG: check readiness
   PG->>BD: Associate Form or Task
   BD-->FN: Site Update
 
-  UI->>GW: POST projectTemplate/site/review
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review readiness
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/readiness-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskreadiness-completed
+  GW->>PG: complete readiness
   PG->>BD: Associate Form or Task
   BD-->FN: Site Status Updated
 
-  UI->>GW: POST projectTemplate/site/assign-installation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskassign-installation
+  GW->>PG: assign installation
   PG->>BD: Assign to User
 
-  UI->>GW: POST projectTemplate/site/olt-installation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskolt-installation
+  GW->>PG: install olt
   PG->>BD: Associate Form or Task
   BD-->FN: Site Update
 
-  UI->>GW: POST projectTemplate/site/review-installation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task-installation
+  GW->>PG: review installation
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/installation-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskinstallation-completed
+  GW->>PG: complete installation
   PG->>BD: Associate Form or Task
   BD-->FN: Site Update
 
-  UI->>GW: POST projectTemplate/site/atp
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskatp
+  GW->>PG: perform atp
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/review-test-report
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task-test-report
+  GW->>PG: review test
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/test-report-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/tasktest-report-completed
+  GW->>PG: complete test
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/hoto
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskhoto
+  GW->>PG: perform hoto
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/hoto-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskhoto-completed
+  GW->>PG: complete hoto
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/ready-for-service
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskready-for-service
+  GW->>PG: ready service
   PG->>BD: Associate Form or Task
 
-  UI->>GW: GET projectTemplate/site/in-service
-  GW->>PG: Route
+  UI->>GW: GET projectServiceURL/taskin-service
+  GW->>PG: view service
   PG->>BD: View In Service
   BD-->FN: Status Workflow Updated
 ```
 
-### Survey and Acquisition
+#### (e) Survey and Acquisition
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
   participant FN as Fiberneo MicroService
 
   U->>UI: Assign for Site Survey
-  UI->>GW: POST projectTemplate/site/assign-survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: assign survey
   PG->>BD: Assign to User
 
-  UI->>GW: POST projectTemplate/site/survey
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: perform survey
   PG->>BD: Associate Form or Task\
   BD->>FN: Data Updated
 
-  UI->>GW: POST projectTemplate/site/review
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: review survey
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/survey-completed
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: complete survey
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/acquisition
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-  BD->>FN: Data Updated
-
-  UI->>GW: POST projectTemplate/site/leasing
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskacquisition
+  GW->>PG: process acquisition
   PG->>BD: Associate Form or Task
   BD->>FN: Data Updated
 
-  UI->>GW: POST projectTemplate/site/legal-approval
-  GW->>PG: Route
-  PG->>BD: Associate Form or Task
-
-  UI->>GW: POST projectTemplate/site/financial-approval
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskleasing
+  GW->>PG: process leasing
   PG->>BD: Associate Form or Task
   BD->>FN: Data Updated
 
-  UI->>GW: POST projectTemplate/site/ready-for-construction
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/tasklegal-approval
+  GW->>PG: approve legal
+  PG->>BD: Associate Form or Task
+
+  UI->>GW: POST projectServiceURL/taskfinancial-approval
+  GW->>PG: approve financial
+  PG->>BD: Associate Form or Task
+  BD->>FN: Data Updated
+
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: ready construction
   PG->>BD: Associate Form or Task
   BD->>FN: Status Updated
 ```
 
-### Site Design and Construction
+#### (f) Site Design and Construction
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant UI as Web/Mobile UI
+  participant UI as Web UI
   participant GW as API Gateway
   participant PG as Project MicroService
   participant BD as Builder MicroService
@@ -698,81 +547,81 @@ sequenceDiagram
   participant MM as Material Management MicroService
 
   U->>UI: Assign Site Design
-  UI->>GW: POST projectTemplate/site/assign-design
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskassign-design
+  GW->>PG: assign design
   PG->>BD: Assign to User
 
-  UI->>GW: POST projectTemplate/site/design
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskdesign
+  GW->>PG: perform design
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/review-design
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task-design
+  GW->>PG: review design
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/design-complete
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskdesign-complete
+  GW->>PG: complete design
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/building-design
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskbuilding-design
+  GW->>PG: design building
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/building-design-review
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskbuilding-design-review
+  GW->>PG: review building
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/bom-preparation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskbom-preparation
+  GW->>PG: prepare bom
   PG->>BD: Associate Form or Task
   BD->>MM: Generate Bill of Material
 
-  UI->>GW: POST projectTemplate/site/material-request
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: request material
   PG->>BD: Associate Form or Task
   BD->>MM: Material Request
 
-  UI->>GW: POST projectTemplate/site/material-receipt
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskmaterial-receipt
+  GW->>PG: receive material
   PG->>BD: Associate Form or Task
   BD->>MM: Material Receipt
 
-  UI->>GW: POST projectTemplate/site/ready-for-construction
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/task
+  GW->>PG: ready construction
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/inspection
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskinspection
+  GW->>PG: perform inspection
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/ready-for-commissioning
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskready-for-commissioning
+  GW->>PG: ready commissioning
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/earth-pits
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskearth-pits
+  GW->>PG: install earth-pits
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/shelter-fencing
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskshelter-fencing
+  GW->>PG: install fencing
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/foundation
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskfoundation
+  GW->>PG: build foundation
   PG->>BD: Associate Form or Task
 
-  UI->>GW: POST projectTemplate/site/electric-construction
-  GW->>PG: Route
+  UI->>GW: POST projectServiceURL/taskelectric-construction
+  GW->>PG: install electric
   PG->>BD: Associate Form or Task
 ```
 
 ## 3. Solution Features and User Interface
 
 - **Area Management**: Create/Edit Area geometry on map, attribute forms, stage transitions.
-  - Primary actions: Create, Search (RSQL), Import/Export, Stage update, View counts.
+  - Primary actions: Create, Import/Export, Stage update, View counts.
   - Success: Entities persisted, visible on map, correct status and counts updated.
 
-  - (a) Area Home Page List
+  - (a) Area List
 
    <div align="Center">
     <image src="../Image/LLD_Images/AreaList.png" alt="User Login Request Flow" height="300" 
@@ -785,12 +634,31 @@ sequenceDiagram
     |---------------|-------------|--------------|
     | <img src="../Image/LLD_Images/AreaBeforeCreate.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/AreaCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/AreaAfterCreate.png" alt="After Create" height="250"> |
 
+  - (c) Area of Interest 
 
+    **Area Prioritization Process:**
+    
+    (i). **Select and Trigger Project:** Choose the area to prioritize and trigger the project as shown below:
+    
+    <div align="Center">
+      <image src="../Image/LLD_Images/AOI_Project.png" alt="Area of Interest Project" height="300" 
+      style="background: transparent;">
+      </div>
+
+    (ii). **Complete Workflow:** Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
+    
+    <div align="Center">
+      <image src="../Image/LLD_Images/AreaofInterest.png" alt="Area of Interest" height="300" 
+      style="background: transparent;">
+      </div>
+
+  
 - **Link Management**: Create/Edit Link geometry on map, attribute forms, stage transitions.
-  - Primary actions: Create, Search (RSQL), Import/Export, Stage update, View counts.
+  - Primary actions: Create, Import/Export, Stage update, View counts.
   - Success: Entities persisted, visible on map, correct status and counts updated.
 
-  - (a) Link Home Page List
+
+  - (a) Link List
 
    <div align="Center">
     <image src="../Image/LLD_Images/LinkList.png" alt="User Login Request Flow" height="300" 
@@ -803,6 +671,28 @@ sequenceDiagram
     |---------------|-------------|--------------|
     | <img src="../Image/LLD_Images/BeforeLinkCreate.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/LinkDraw.png" alt="After Create" height="250"> |
 
+- **Site Creation**: You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
+  
+  - (a) Site List
+
+ <div align="Center">
+    <image src="../Image/LLD_Images/SitePage.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
+
+  - (b) Site Project
+
+ <div align="Center">
+    <image src="../Image/LLD_Images/SiteProject.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
+
+  - (c) Site Create 
+
+   <div align="Center">
+    <image src="../Image/LLD_Images/SiteCreate.png" alt="User Login Request Flow" height="300" 
+    style="background: transparent;">
+    </div>
 
 - **Perform Survey**: Performing roll-out task creating Span, Conduit, Transmedia, Facilities on Area or Link.
   - Actions: Add span, conduit, transmedia, facilities, structures, equipment, obstacles, reference-point.
@@ -889,6 +779,34 @@ sequenceDiagram
   - **Maintenance Tracking**: Schedule and track maintenance activities for network equipment
   - **Service Quality**: Ensure optimal performance and customer satisfaction
 
+- **Build Decision**: Provides comprehensive analytics to support strategic fiber rollout decisions and future planning
+
+  <div align="center">
+    <image src="../Image/LLD_Images/BuildDecision.png" alt="Build Decision Analytics" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Key Features:**
+  - Competitor analysis and market insights
+  - Area size and demographic data
+  - Income calculation and revenue projections
+  - Small and large business counts
+  - Optimization tools for fiber business strategy and rollout planning
+
+- **ILD (International Line Drawing)**: Central hub management system for international fiber connections and data center operations
+
+   <div align="center">
+    <image src="../Image/LLD_Images/ILD.png" alt="International Line Drawing" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Link Connection Details:** The system displays comprehensive information about how specific fiber links are connected internationally:
+
+  <div align="center">
+    <image src="../Image/LLD_Images/ILD_Detail.png" alt="ILD Link Details" height="400" 
+    style="background: transparent;">
+  </div>
+
 ## 4. Integration Details
 
 ### 4.1 Internal Service Integrations
@@ -913,7 +831,6 @@ sequenceDiagram
 ### 4.3 Data Synchronization
 - **Event-Driven Architecture**: Asynchronous communication between services
 - **Database Replication**: Multi-region data synchronization
-- **Cache Invalidation**: Redis cache management across services
 - **Search Index Updates**: Elasticsearch synchronization
 
 ## 5. Database Schema Design
@@ -989,7 +906,7 @@ sequenceDiagram
   - `CREATOR` → `USER(Varchar (36))`
   - `LAST_MODIFIER` → `USER(Varchar (36))`
 - **Key Attributes**: `NAME`, `CODE`, `ADDRESS`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Physical facilities/sites in the network
+- **Description**: Physical facilitiess in the network
 
 ---
 
@@ -1217,247 +1134,46 @@ sequenceDiagram
 
 ## Actual Implementation Tables
 
-### `ACTUAL_FACILITY`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `FACILITY_ID` → `FACILITY(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `CODE`, `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Actual implemented facilities
+These tables store the final, approved data for each entity after the complete review and planning process. Each table mirrors its corresponding plan entity structure and includes mappings to both the original plan table and any deviation records.
 
-### `ACTUAL_CONDUIT`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `ACTUAL_SPAN_ID` → `ACTUAL_SPAN(Varchar (36))`
-  - `VENDOR` → `VENDOR(Varchar (36))`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `CODE`, `NAME`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
-- **Description**: Actual implemented conduits
+**Key Characteristics:**
+- Contain the same columns as their corresponding plan entities
+- Include foreign key mappings to both plan tables and deviation tables
+- Store the definitive, implementation-ready data
+- Example: `ACTUAL_SPAN` contains `SPAN_ID` and `DEVIATION_SPAN_ID` references
 
-### `ACTUAL_EQUIPMENT`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
-  - `FACILITY_ID` → `FACILITY(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `SHELF_ID` → `SHELF(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `VENDOR` → `VENDOR(Varchar (36))`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `CODE`, `NAME`, `TYPE`, `LATITUDE`, `LONGITUDE`
-- **Description**: Actual implemented equipment
-
-### `ACTUAL_STRUCTURE`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `CIRCUIT_ID` → `CIRCUIT(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `CODE`, `NAME`, `LATITUDE`, `LONGITUDE`
-- **Description**: Actual implemented structures
-
-### `ACTUAL_SPAN`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `SPAN_ID` → `SPAN(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `VENDOR` → `VENDOR(Varchar (36))`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LENGTH`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
-- **Description**: Actual implemented spans
-
-### `ACTUAL_TRANSMEDIA`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `ACTUAL_CONDUIT_ID` → `ACTUAL_CONDUIT(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `VENDOR` → `VENDOR(Varchar (36))`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LENGTH`, `NO_OF_FIBERS`, `FIBER_TYPE`
-- **Description**: Actual implemented transmission media
-
-### `ACTUAL_OBSTACLE`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Actual implemented obstacles
-
-### `ACTUAL_REFERENCE_POINT`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
-  - `ACTUAL_STRUCTURE_ID` → `ACTUAL_STRUCTURE(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
-- **Description**: Actual implemented reference points
----
+**Table List:**
+- `ACTUAL_FACILITY` - Final facility implementation data
+- `ACTUAL_CONDUIT` - Final conduit implementation data  
+- `ACTUAL_EQUIPMENT` - Final equipment implementation data
+- `ACTUAL_STRUCTURE` - Final structure implementation data
+- `ACTUAL_SPAN` - Final span implementation data
+- `ACTUAL_TRANSMEDIA` - Final transmission media implementation data
+- `ACTUAL_OBSTACLE` - Final obstacle implementation data
+- `ACTUAL_REFERENCE_POINT` - Final reference point implementation data
 
 ## Deviation Management Tables
 
-### `FACILITY_DEVIATION`
-- **PK**: `id` (Varchar (36))
-- **FK**: 
-  - `FACILITY_ID` → `FACILITY(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Facility change deviations
+These tables track changes and modifications made to plan entities during the review process. Each deviation table maintains the same structure as its corresponding plan entity and includes references to the original plan data.
 
-### `CONDUIT_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `CONDUIT_ID` → `CONDUIT(Varchar (36))`
-  - `SPAN_DEVIATION_ID` → `SPAN_DEVIATION(Varchar (36))`
-  - `VENDOR` → `VENDOR(Varchar (36))`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Conduit change deviations
+**Key Characteristics:**
+- Mirror the column structure of their corresponding plan entities
+- Include foreign key mappings to the original plan tables
+- Store modified data due to various reasons such as:
+  - Geometry path deviations
+  - Design changes during review
+  - Field condition updates
+  - Regulatory requirement adjustments
 
-### `EQUIPMENT_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Equipment change deviations
-
-### `STRUCTURE_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Structure change deviations
-
-### `SPAN_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `SPAN_ID` → `SPAN(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Span change deviations
-
-### `TRANSMEDIA_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `TRANSMEDIA_ID` → `TRANSMEDIA(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `LINK_ID` → `LINK(Varchar (36))`
-  - `CONDUIT_DEVIATION_ID` → `CONDUIT_DEVIATION(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Transmission media change deviations
-
-### `OBSTACLE_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `OBSTACLE_ID` → `OBSTACLE(Varchar (36))`
-  - `AREA_ID` → `AREA(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Obstacle change deviations
-
-### `REFERENCE_POINT_DEVIATION`
-- **PK**: `ID` (Varchar (36))
-- **FK**: 
-  - `REFERENCE_POINT_ID` → `REFERENCE_POINT(Varchar (36))`
-  - `STRUCTURE_DEVIATION_ID` → `STRUCTURE_DEVIATION(Varchar (36))`
-  - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
-  - `PRIMARY_GEO_L2_FK` → `PRIMARY_GEO_L2(ID)`
-  - `PRIMARY_GEO_L3_FK` → `PRIMARY_GEO_L3(ID)`
-  - `PRIMARY_GEO_L4_FK` → `PRIMARY_GEO_L4(ID)`
-  - `CREATOR` → `USER(Varchar (36))`
-  - `LAST_MODIFIER` → `USER(Varchar (36))`
-- **Key Attributes**: `NAME`
-- **Description**: Reference point change deviations
-
----
-
-## Supporting Tables
+**Table List:**
+- `FACILITY_DEVIATION` - Facility modification records
+- `CONDUIT_DEVIATION` - Conduit modification records
+- `EQUIPMENT_DEVIATION` - Equipment modification records
+- `STRUCTURE_DEVIATION` - Structure modification records
+- `SPAN_DEVIATION` - Span modification records
+- `TRANSMEDIA_DEVIATION` - Transmission media modification records
+- `OBSTACLE_DEVIATION` - Obstacle modification records
+- `REFERENCE_POINT_DEVIATION` - Reference point modification records
 
 ### `USER`
 - **PK**: `ID` (Varchar (36))
@@ -2219,8 +1935,8 @@ erDiagram
 
 ### 5.2 CDC Configuration
 
-- ** User CDC is Done from Platform Database for User of Platform to Fiberneo User Table
-- ** Primary_Geo (L1,L2,L3,L4): Geometry Level Data Entry from Platfrom Data for Country , State , City , District level Data. 
+- User CDC is Done from Platform Database for User of Platform to Fiberneo User Table
+- Primary_Geo (L1,L2,L3,L4): Geometry Level Data Entry from Platfrom Data for Country , State , City , District level Data. 
 
 ## Fiberneo API Details
 
@@ -2237,7 +1953,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Area | FIBERNEO_AREA_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_AREA_VIEW |
+| `count` | GET | Counts of Area | FIBERNEO_AREA_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_AREA_VIEW |
 | `update` | POST | Update Area | FIBERNEO_AREA_CREATE |
 | `getAreaTrends` | GET | Trends | FIBERNEO_AREA_VIEW |
@@ -2256,7 +1972,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Link | FIBERNEO_LINK_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_LINK_VIEW |
+| `count` | GET | Count of Link | FIBERNEO_LINK_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_LINK_VIEW |
 | `update` | POST | Update Link | FIBERNEO_LINK_CREATE |
 | `getLinkCountsByStatus` | GET | Counts by status | FIBERNEO_LINK_VIEW |
@@ -2269,7 +1985,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Facility | FIBERNEO_FACILITY_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_FACILITY_VIEW |
+| `count` | GET | Counts | FIBERNEO_FACILITY_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_FACILITY_VIEW |
 | `update` | POST | Update Facility | FIBERNEO_FACILITY_CREATE |
 | `getFacitlityTrends` | GET | Trends | FIBERNEO_SITE_VIEW |
@@ -2282,7 +1998,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Customer Site | FIBERNEO_CUSTOMER_SITE_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_CUSTOMER_SITE_VIEW |
+| `count` | GET | Counts | FIBERNEO_CUSTOMER_SITE_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_CUSTOMER_SITE_VIEW |
 | `update` | POST | Update Customer Site | FIBERNEO_CUSTOMER_SITE_CREATE |
 | `updateProjectStatus` | POST | Update stage status | FIBERNEO_CUSTOMER_SITE_CREATE |
@@ -2293,7 +2009,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Equipment | FIBERNEO_EQUIPMENT_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_EQUIPMENT_VIEW |
+| `count` | GET | Counts | FIBERNEO_EQUIPMENT_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_EQUIPMENT_VIEW |
 | `update` | POST | Update Equipment | FIBERNEO_EQUIPMENT_CREATE |
 | `getEquipmentByViewPort` | GET | Equipment in viewport | FIBERNEO_EQUIPMENT_VIEW |
@@ -2306,7 +2022,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Structure | FIBERNEO_STRUCTURE_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_STRUCTURE_VIEW |
+| `count` | GET | Counts | FIBERNEO_STRUCTURE_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_STRUCTURE_VIEW |
 | `update` | POST | Update Structure | FIBERNEO_STRUCTURE_CREATE |
 | `getStructureHistory` | GET | Structure audit history | FIBERNEO_STRUCTURE_VIEW |
@@ -2316,7 +2032,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Span | FIBERNEO_SPAN_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_SPAN_VIEW |
+| `count` | GET | Counts | FIBERNEO_SPAN_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_SPAN_VIEW |
 | `update` | POST | Update Span | FIBERNEO_SPAN_CREATE |
 | `bulkUpdate` | POST | Bulk update | FIBERNEO_SPAN_CONFIGURATOR |
@@ -2326,7 +2042,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Conduit | FIBERNEO_CONDUIT_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_CONDUIT_VIEW |
+| `count` | GET | Counts | FIBERNEO_CONDUIT_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_CONDUIT_VIEW |
 | `update` | POST | Update Conduit | FIBERNEO_CONDUIT_CREATE |
 | `bulkUpdate` | POST | Bulk update | FIBERNEO_CONDUIT_CONFIGURATOR |
@@ -2336,7 +2052,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create Transmedia | FIBERNEO_TRANSMEDIA_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_TRANSMEDIA_VIEW |
+| `count` | GET | Counts | FIBERNEO_TRANSMEDIA_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_TRANSMEDIA_VIEW |
 | `update` | POST | Update Transmedia | FIBERNEO_TRANSMEDIA_CREATE |
 | `bulkUpdate` | POST | Bulk update | FIBERNEO_TRANSMEDIA_CONFIGURATOR |
@@ -2346,7 +2062,7 @@ This document summarizes REST endpoints for core entities exposed by the `fibern
 | Endpoint | Method | Description | Security Scope |
 |----------|--------|-------------|----------------|
 | `create` | POST | Create RowDetails | FIBERNEO_ROW_DETAILS_CREATE |
-| `count` | GET | Count with RSQL filter | FIBERNEO_ROW_DETAILS_VIEW |
+| `count` | GET | Counts | FIBERNEO_ROW_DETAILS_VIEW |
 | `search` | GET | Search with pagination/sort | FIBERNEO_ROW_DETAILS_VIEW |
 | `update` | POST | Update RowDetails | FIBERNEO_ROW_DETAILS_CREATE |
 
@@ -2365,7 +2081,6 @@ POST /Area/create
 }
 ```
 ```json
-201
 {
   "id": 101,
   "name": "Sector 21",
@@ -2396,129 +2111,9 @@ Recommendations: Version as `/api/v1`; cursor-based pagination for large map que
 ### 7.2 Profile Template
 - [Fiberneo Profile template](./FIBERNEO_Profile_Template/)
 
-# FiberNEO Backend Controller Permissions
+# Fiberneo Backend Controller Permissions
 
-This document provides a comprehensive mapping of all permission scopes and their associated methods across all Controller classes in the FiberNEO Backend system.
-
-### Area Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_AREA_CREATE** | create, update, deleteById, softDelete, updateBlockDetails, updateAllBlockDetails, updateProjectStatus, updateDeploymentType |
-| **FIBERNEO_AREA_VIEW** | count, search, findById, findAllById, getLayer, getLayerByBbox, getEntityTypeCountsByStatus, getPriorityCountByDeploymentType,  getAreaTrends, getAreaByViewPort, getAreaCountByViewPort, getAreaByROWDetails, getAreaCountsByROWDetails, getServiceImpactedArea, getDataForAudit, downloadTemplate |
-| **FIBERNEO_AREA_CONFIGURATOR** | importData, export, importFile |
-
-### Structure Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_STRUCTURE_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_STRUCTURE_VIEW** | count, search, findById, findAllById, getStructureHistory, getStructureByViewPort, getStructureByCircuitId, getStructureDetailsByCircuitId |
-| **FIBERNEO_STRUCTURE_CONFIGURATOR** | bulkUpdate |
-
-### Conduit Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_CONDUIT_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_CONDUIT_VIEW** | count, search, findById, findAllById, getConduitByViewPort, getConduitByCircuitId, getConduitDetailsByCircuitId |
-| **FIBERNEO_CONDUIT_CONFIGURATOR** | bulkUpdate |
-
-### Circuit Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_CIRCUIT_CREATE** | create, update, deleteById |
-| **FIBERNEO_CIRCUIT_VIEW** | getCircuitByViewPort, count, search, findById, findAllById, lossBudgetByCircuitId, getAllDataByCircuitID |
-| **FIBERNEO_CIRCUIT_CONFIGURATOR** | bulkUpdate, generateFileByViewPort, generateFileByCircuitId, getCircuitReportById, uploadCSV, convertKmlandXMLToJson, importFile, downloadTemplate |
-
-### Equipment Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_EQUIPMENT_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_EQUIPMENT_VIEW** | count, search, findById, findAllById, getEquipmentByViewPort, getEquipmentByCircuitId, getEquipmentDetailsByCircuitId, getCircuitDetailsByEquipmentWithinBoundary, getEquipmentDetailsByLatLong, getODFDetailsByRouter, getNearestStructureFromEquipmentAndCustomerLocation, getSpanListBetweenTwoEquipment, getRouterDetailsByODF |
-| **FIBERNEO_EQUIPMENT_CONFIGURATOR** | bulkUpdate |
-
-### Facility Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_FACILITY_CREATE** | create, update, deleteById, softDelete, updateProjectStatus |
-| **FIBERNEO_FACILITY_VIEW** | count, search, findById, findAllById, getFacitlityTrends, getFacilityStatusWiseCounts, getFacilityTypeStatusWiseCounts, getFacilityCountsByCity, getFacilityCountsByState, getCountOfSiteDistribution, getFacilityTypeCountsByStatus, getLocationWiseFacilityStatusCount, getFacilityByViewPort, getFacilityCountByViewPort, getFacilityByCircuitId, getFacilityCountByCircuitId, getFacilityHierarchyDetails, getFacilityDetailsByCircuitId, findShortestPathByGoogleApi, getDataForAudit |
-| **FIBERNEO_FACILITY_CONFIGURATOR** | bulkUpdate, importData, export, createJobFromFacility, importFile, downloadTemplate |
-
-### Customer Site Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_CUSTOMER_SITE_CREATE** | create, update, deleteById, softDelete, updateProjectStatus |
-| **FIBERNEO_CUSTOMER_SITE_VIEW** | count, search, findById, findAllById, getCustomerSiteByViewPort, getCustomerSiteByCircuitId, getCustomerSiteDetailsByCircuitId, getCustomerSiteTrends, getCustomerSiteStatusWiseCounts, getCustomerSiteTypeStatusWiseCounts, getCustomerSiteCountsByCity, getCustomerSiteCountsByState, getCustomerSiteTypeCountsByStatus, getLocationWiseCustomerSiteStatusCount, getCustomerSiteCountByViewPort, getCustomerSiteCountByCircuitId, getDataForAudit |
-| **FIBERNEO_CUSTOMER_SITE_CONFIGURATOR** | bulkUpdate, importData, export, importFile, downloadTemplate |
-
-### Network Equipment Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_NETWORK_EQUIPMENT_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_NETWORK_EQUIPMENT_VIEW** | count, search, findById, findAllById, getNetworkEquipmentByViewPort, getNetworkEquipmentByCircuitId, getNetworkEquipmentDetailsByCircuitId |
-| **FIBERNEO_NETWORK_EQUIPMENT_CONFIGURATOR** | bulkUpdate |
-
-### Transmedia Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_TRANSMEDIA_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_TRANSMEDIA_VIEW** | count, search, findById, findAllById, getTransmediaByViewPort, getTransmediaByCircuitId, getTransmediaDetailsByCircuitId |
-| **FIBERNEO_TRANSMEDIA_CONFIGURATOR** | bulkUpdate |
-
-### Survey Condition Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_SURVEY_CONDITION_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_SURVEY_CONDITION_VIEW** | count, search, findById, findAllById, getSurveyConditionByViewPort, getSurveyConditionByCircuitId, getSurveyConditionDetailsByCircuitId |
-
-### Span Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_SPAN_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_SPAN_VIEW** | count, search, findById, findAllById, getSpanByViewPort, getSpanByCircuitId, getSpanDetailsByCircuitId |
-| **FIBERNEO_SPAN_CONFIGURATOR** | bulkUpdate |
-
-### Network Equipment Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_ROW_DETAILS_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_ROW_DETAILS_VIEW** | count, search, findById, findAllById, getRowDetailsByViewPort, getRowDetailsByCircuitId, getRowDetailsDetailsByCircuitId |
-| **FIBERNEO_ROW_DETAILS_CONFIGURATOR** | bulkUpdate |
-
-### Reference Point Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_REFERENCEPOINT_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_REFERENCEPOINT_VIEW** | count, search, findById, findAllById, getReferencepointByViewPort, getReferencepointByCircuitId, getReferencepointDetailsByCircuitId |
-| **FIBERNEO_REFERENCEPOINT_CONFIGURATOR** | bulkUpdate |
-
-### Obstacle Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_OBSTACLE_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_OBSTACLE_VIEW** | count, search, findById, findAllById, getObstacleByViewPort, getObstacleByCircuitId, getObstacleDetailsByCircuitId |
-| **FIBERNEO_OBSTACLE_CONFIGURATOR** | bulkUpdate |
-
-### Link Permission
-
-| Permission Scope | Methods/Operations |
-|------------------|-------------------|
-| **FIBERNEO_LINK_CREATE** | create, update, deleteById, softDelete |
-| **FIBERNEO_LINK_VIEW** | count, search, findById, findAllById, getLinkByViewPort, getLinkByCircuitId, getLinkDetailsByCircuitId |
-| **FIBERNEO_LINK_CONFIGURATOR** | bulkUpdate |
-
+This document provides a comprehensive mapping of all permission scopes and their associated methods across all Controller classes in the Fiberneo Backend system.
 
 ## 8. Monitoring & Alerting
 
@@ -2556,21 +2151,16 @@ style="background: transparent;">
 - **Error Rates**: Track and alert on error thresholds
 
 ### 8.2 Alerting Rules
-- **High Error Rate**: Alert when error rate exceeds 5%
+- **CPU Alert Rate**: Alert when error rate exceeds 5%
 - **Slow Response**: Alert when API response time exceeds 2 seconds
 - **Database Issues**: Alert on connection pool exhaustion
-- **Low Inventory**: Alert when inventory levels fall below threshold
-- **Failed Workflows**: Alert on BPMN workflow failures
 
 ## 9. Performance and Scaling
-
-*[Placeholder for Performance Screenshots and Documentation]*
 
 ### 9.1 Performance Optimizations
 - **Database Indexing**: Optimized indexes for frequently queried columns
 - **Caching Strategy**: Redis caching for frequently accessed data
 - **Connection Pooling**: Optimized database connection management
-- **Query Optimization**: RSQL-based filtering and pagination
 - **Async Processing**: Background processing for heavy operations
 
 ### 9.2 Scaling Strategy
@@ -2584,12 +2174,9 @@ style="background: transparent;">
 
 ### 10.1 Common Issues & Debugging
 
-*[Placeholder for Common Issues Screenshots and Documentation]*
-
 **Common Issues:**
 1. **Database Connection Issues**: Check connection pool configuration
 2. **Workflow Failures**: Verify BPMN engine connectivity
-3. **Cache Misses**: Check Redis connectivity and configuration
 4. **Permission Errors**: Verify RBAC configuration and user roles
 5. **Data Synchronization**: Check CDC configuration and event processing
 
@@ -2602,8 +2189,6 @@ style="background: transparent;">
 
 ### 10.2 Performance Tuning Guide
 
-*[Placeholder for Performance Tuning Screenshots and Documentation]*
-
 **Database Tuning:**
 - Monitor slow query logs
 - Optimize indexes based on query patterns
@@ -2613,7 +2198,6 @@ style="background: transparent;">
 **Application Tuning:**
 - Monitor JVM heap usage
 - Tune garbage collection settings
-- Optimize cache configurations
 - Review and optimize API response times
 
 ## 11. Appendices
@@ -2621,7 +2205,6 @@ style="background: transparent;">
 ### 11.1 Technology Stack
 - **Backend**: Java 21, Spring Boot 3.x, Spring Cloud
 - **Database**: MySQL 8.1
-- **Cache**: Redis
 - **Search**: Elasticsearch
 - **Container**: Docker, Kubernetes
 - **API Gateway**: Spring Cloud Gateway
@@ -2629,15 +2212,7 @@ style="background: transparent;">
 - **Monitoring**: Prometheus, Grafana
 - **Logging**: ELK Stack
 
-### 11.2 Database Schema Statistics
-- **Total Tables**: 40+ tables across all modules
-- **Fiber-Model: 10+ tables across all modules
-
-### 11.3 API Statistics
-- **Total Endpoints**: 50+ REST endpoints
-- **Fiber-Model Management**: 15+ endpoints
-
-### 11.4 Security Features
+### 11.2 Security Features
 - **Authentication**: OAuth2 with JWT tokens
 - **Authorization**: Role-based access control (RBAC)
 - **Data Encryption**: At-rest and in-transit encryption

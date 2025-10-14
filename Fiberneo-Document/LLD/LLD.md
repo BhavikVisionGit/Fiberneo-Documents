@@ -7,27 +7,23 @@
 
 2. [Solution Design](#2-solution-design)
    - 2.1 [Architecture Diagram](#21-architecture-diagram)
-   - 2.2 [Component Diagram](#22-component-diagram)
-   - 2.3 [Application Flow - Sequence Diagrams](#23-application-flow---sequence-diagrams)
-     - 2.3.1 [Entity Creation Flow](#231-entity-creation-flow)
-     - 2.3.2 [Project Stage Transition Flow](#232-project-stage-transition-flow)
-     - 2.3.3 [Construction and Testing Flow](#233-construction-and-testing-flow)
-     - 2.3.4 [Handover (HOTO) and Ready for Service Flow](#234-handover-hoto-and-ready-for-service-flow)
+   - 2.2 [Application Flow - Sequence Diagrams](#22-application-flow---sequence-diagrams)
+     - 2.2.1 [Entity Creation Flow](#221-entity-creation-flow)
+     - 2.2.2 [Project Stage Transition Flow](#222-project-stage-transition-flow)
+     - 2.2.3 [Area Project Flow](#223-area-project-flow)
+     - 2.2.4 [Link Project Task](#224-link-project-task)
+   
 
 3. [Solution Features and User Interface](#3-solution-features-and-user-interface)
-   - 3.1 [Area/Link/Site Management](#area-link-site-management)
-   - 3.2 [Survey and Planning](#survey-and-planning)
-   - 3.3 [Construction and Testing](#construction-and-testing)
-   - 3.4 [Splicing and Ports](#splicing--port-management-ui)
+   - 3.1 [Area/Link/Site Management](#31-arealinksite-management)
+   - 3.2 [Survey and Planning](#32-survey-and-planning)
+   - 3.3 [Construction and Testing](#33-construction-and-testing)
+   - 3.4 [Splicing and Ports](#34-splicing-and-port-management-ui)
 
 4. [Integration Details](#4-integration-details)
 
 5. [Database Schema Design](#5-database-schema-design)
-   - 5.1 [ER Diagram - Module-wise](#51-er-diagram-and-module-wise-tables-40-tables)
-     - 5.1.1 [Project & Survey Module](#a-project--survey)
-     - 5.1.2 [Network Model Module](#b-network-model)
-     - 5.1.3 [Workflow & Status Module](#d-workflow--status)
-     - 5.1.4 [Import/Export & GIS Support](#f-importexport)
+   - 5.1 [ER Diagram and Tables (>40 tables)](#51-er-diagram-and-tables-40-tables)
    - 5.2 [CDC Configuration](#52-cdc-configuration)
 
 6. [API Details](#6-api-details)
@@ -46,7 +42,7 @@
 
 11. [Appendices](#11-appendices)
     - 11.1 [Technology Stack](#111-technology-stack)
-    - 11.2 [Security Features](#114-security-features)
+    - 11.2 [Security Features](#112-security-features)
 
 ## 1. Introduction
 
@@ -118,7 +114,7 @@ graph TD
 
 ### 2.2 Application Flow - Sequence Diagrams
 
-#### 2.2.1 Entity Creation Flow
+### 2.2.1 Entity Creation Flow
 
 #### Create Area, Link and Site on UI on Map
 
@@ -143,7 +139,7 @@ sequenceDiagram
   GW-->>UI: Render entity on map
 ```
 
-#### 2.2.2 Project Stage Transition Flow
+### 2.2.2 Project Stage Transition Flow
 
 #### Project Flows (high-level)
 
@@ -163,7 +159,7 @@ sequenceDiagram
   FN->>DB: persist status, audit
 ```
 
-2.2.3 Area Project Flow
+### 2.2.3 Area Project Flow
 
 #### (a) Perform Area Of Interest (AOI) 
 
@@ -192,7 +188,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-##### (b) Area Planning Survey
+#### (b) Area Planning Survey
 
 ```mermaid
 sequenceDiagram
@@ -280,7 +276,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-#### (c) Area Installation and Construction
+### (c) Area Installation and Construction
 
 ```mermaid
 sequenceDiagram
@@ -341,9 +337,9 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-#### 2.2.4 Link Project Task
+### 2.2.4 Link Project Task
 
-##### (a) Link Planning and Survey
+#### (a) Link Planning and Survey
 
 The Link Planning and Survey process follows the exact same workflow and structure as the Area Planning and Survey module.
 
@@ -357,7 +353,7 @@ This includes:
 
 👉 **Essentially, all task stages, data flow, and approval checkpoints mirror the existing Area Planning and Survey workflow, ensuring consistency and standardization.**
 
-##### (b) Link Installation and Construction
+#### (b) Link Installation and Construction
 
 The Link Installation and Construction process is aligned with the Area Installation and Construction workflow.
 
@@ -370,7 +366,7 @@ This includes:
 - **Testing & Commissioning**: Conducting OTDR testing, link validation, and final acceptance.
 - **Documentation & Handover**: Capturing as-built data, uploading test reports, and closing the task with approvals.
 
-#### (c) FiberLink HOTO
+### (c) FiberLink HOTO
 
 ```mermaid
 sequenceDiagram
@@ -399,7 +395,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-#### (d) OLT Installation and Commissioning (Site)
+### (d) OLT Installation and Commissioning (Site)
 
 ```mermaid
 sequenceDiagram
@@ -478,7 +474,7 @@ sequenceDiagram
   BD-->FN: Status Workflow Updated
 ```
 
-#### (e) Survey and Acquisition
+### (e) Survey and Acquisition
 
 ```mermaid
 sequenceDiagram
@@ -533,7 +529,7 @@ sequenceDiagram
   BD->>FN: Status Updated
 ```
 
-#### (f) Site Design and Construction
+### (f) Site Design and Construction
 
 ```mermaid
 sequenceDiagram
@@ -617,6 +613,8 @@ sequenceDiagram
 
 ## 3. Solution Features and User Interface
 
+### 3.1 Area/Link/Site Management
+
 - **Area Management**: Create/Edit Area geometry on map, attribute forms, stage transitions.
   - Primary actions: Create, Import/Export, Stage update, View counts.
   - Success: Entities persisted, visible on map, correct status and counts updated.
@@ -652,6 +650,22 @@ sequenceDiagram
       style="background: transparent;">
       </div>
 
+  - (d) Area View
+
+    In the Area View you have many things to see for particular area , Documents , Projects on that area , Material Assets , WBS is to show all child entity create inside this area (Span,Conduit,Transmedia etc) and the right top button is the Overview Map view of that area
+
+    <div align="Center">
+      <image src="../Image/LLD_Images/Area_View.png" alt="Area of Interest" height="300" 
+      style="background: transparent;">
+      </div>
+
+   Inside this Overview you can see all Entity on Map with their Different layer view also like Deviation adn Actual Entity map view 
+
+    <div align="Center">
+      <image src="../Image/LLD_Images/Area_Overview.png" alt="Area of Interest" height="300" 
+      style="background: transparent;">
+    </div>
+
   
 - **Link Management**: Create/Edit Link geometry on map, attribute forms, stage transitions.
   - Primary actions: Create, Import/Export, Stage update, View counts.
@@ -670,6 +684,60 @@ sequenceDiagram
     | Before Create | Create Form | After Create |
     |---------------|-------------|--------------|
     | <img src="../Image/LLD_Images/BeforeLinkCreate.png" alt="Before Create" height="250"> | <img src="../Image/LLD_Images/LinkCreateFoam.png" alt="Create Form" height="250"> | <img src="../Image/LLD_Images/LinkDraw.png" alt="After Create" height="250"> |
+
+  - (c) Link create By Auto Rule 
+
+    The Auto Rule feature allows for automated creation of network links with predefined configurations. This streamlines the link creation process by automatically generating associated entities based on configured rules.
+
+    #### **Step 1: Select Source and Destination**
+    
+    Begin by selecting the source and destination points for your link in the Link Creation interface.
+
+    <div align="center">
+      <img src="../Image/LLD_Images/Link_SD_AR.png" alt="Link Source and Destination Selection" height="300" 
+      style="background: transparent;">
+    </div>
+
+    #### **Step 2: Generate Path**
+    
+    Click on the **"Get Path"** button to automatically calculate the optimal route between the selected source and destination points.
+
+    <div align="center">
+      <img src="../Image/LLD_Images/Link_Create_AR.png" alt="Get Path Button" height="300" 
+      style="background: transparent;">
+    </div>
+
+    #### **Step 3: Apply Auto Rules**
+    
+    After the system generates the sorted path, you can apply automated rules by clicking the **"Configure Rule"** button.
+
+    <div align="center">
+      <img src="../Image/LLD_Images/AR_GetPath.png" alt="Configure Rule Button" height="300" 
+      style="background: transparent;">
+    </div>
+
+    #### **Step 4: Select and Apply Rules**
+    
+    Choose from the available rule list to automatically create the respective entities for the link. The Auto Rule system can generate:
+    - **Spans** - Physical connections between points
+    - **Conduits** - Protective pathways for cables
+    - **Transmedia** - Media conversion points
+    - **Structures** - Physical infrastructure elements
+    - **Equipment** - Network devices and hardware
+
+    <div align="center">
+      <img src="../Image/LLD_Images/AutoRule.png" alt="Auto Rule Configuration" height="300" 
+      style="background: transparent;">
+    </div>
+
+    #### **Step 5: Review Generated Entities**
+    
+    Once the rules are applied, the system automatically creates all associated entities for the link, providing a complete network infrastructure setup.
+
+    <div align="center">
+      <img src="../Image/LLD_Images/LinkCreate_Entity.png" alt="Generated Link Entities" height="300" 
+      style="background: transparent;">
+    </div>
 
 - **Site Creation**: You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
   
@@ -693,6 +761,8 @@ sequenceDiagram
     <image src="../Image/LLD_Images/SiteCreate.png" alt="User Login Request Flow" height="300" 
     style="background: transparent;">
     </div>
+
+### 3.2 Survey and Planning
 
 - **Perform Survey**: Performing roll-out task creating Span, Conduit, Transmedia, Facilities on Area or Link.
   - Actions: Add span, conduit, transmedia, facilities, structures, equipment, obstacles, reference-point.
@@ -740,7 +810,17 @@ sequenceDiagram
   5. **Data Validation**: Ensure all required entities are properly created and linked
   6. **Survey Completion**: Submit survey data for review and approval
 
-- **Permit Dashboard**: Permission management and tracking system for survey entities.
+### 3.3 Construction and Testing
+
+- **Permit Dashboard**:  
+  A centralized system for managing and tracking permissions required for survey entities. Span is usually the first physical entity created; during its creation, users must indicate whether a Right of Way (ROW) is needed by selecting the appropriate checkbox (as shown below). Afterward, during the survey phase, project tasks related to ROW can be managed directly from the Permit Dashboard—allowing project managers or relevant authorities to review, approve, or reject permission requests as necessary.
+
+  <div align="center">
+    <image src="../Image/LLD_Images/SpanCreate.png" alt="Permit Dashboard - Permission Management" height="400" 
+    style="background: transparent;">
+  </div>
+
+  The BI Dashboard provides a comprehensive view of permission statuses across Area, Link, and Site entities, allowing users to monitor authorization progress and access various important insights in one place.
 
   <div align="center">
     <image src="../Image/LLD_Images/PermitDashBoard.png" alt="Permit Dashboard - Permission Management" height="400" 
@@ -807,6 +887,49 @@ sequenceDiagram
     style="background: transparent;">
   </div>
 
+- **Circuit Management**: A circuit represents the complete end-to-end connection between source and destination points in the fiber network. It consists of multiple structures and sites interconnected through transmission media, forming a comprehensive network path.
+
+  **Single Line Diagram (SLD) View**: The system provides a visual representation of how circuits are connected across the network infrastructure, as shown in the image below:
+
+  <div align="center">
+    <image src="../Image/LLD_Images/SLD_View.png" alt="Single Line Diagram View" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Circuit List View**: Comprehensive listing of all circuits with their status, connections, and operational details:
+
+  <div align="center">
+    <image src="../Image/LLD_Images/Circuit_View.png" alt="Circuit List View" height="400" 
+    style="background: transparent;">
+  </div>
+
+- **Reporting and Analytics**: The reporting system provides comprehensive analytics and reporting capabilities on a monthly and yearly basis. Users can generate custom reports using the Analytics Service for various entities based on specific conditions and requirements.
+
+  **Report Module Interface**: Access to various reporting functions through the Fiberneo Home Page Module, as shown below:
+
+  <div align="center">
+    <image src="../Image/LLD_Images/Report_Module_View.png" alt="Report Module Interface" height="400" 
+    style="background: transparent;">
+  </div>
+
+  **Report Dashboard**: Business Intelligence (BI) representation of overall report data with interactive dashboards and visualizations:
+
+  <div align="center">
+    <image src="../Image/LLD_Images/Report_Dashboard.png" alt="Report Dashboard" height="400" 
+    style="background: transparent;">
+  </div>
+
+- **GIS Playground**: A comprehensive testing and demonstration environment for exploring and experimenting with Geographic Information System (GIS) data. This module allows users to:
+  - Visualize interactive maps with multiple data layers
+  - Import and export data in various required formats
+  - Perform spatial analysis and data manipulation
+  - Test GIS functionality in a controlled environment
+
+  <div align="center">
+    <image src="../Image/LLD_Images/GIS_View.png" alt="GIS Playground Interface" height="400" 
+    style="background: transparent;">
+  </div>
+
 ## 4. Integration Details
 
 ### 4.1 Internal Service Integrations
@@ -824,12 +947,13 @@ sequenceDiagram
 - **File Storage Service**: Document and attachment management for project files, designs, and reports
 - **Analytics Service**: Business intelligence, reporting, and data visualization
 - **Project Management Service**: Project lifecycle management, task orchestration, and workflow coordination
-- **Builder Service**: Provide their Form,Page and List Support
+- **Builder Service**: Provide their Form, Page, and List Support
 - **SLA Service**: Service level agreement monitoring, compliance tracking, and performance metrics
-- **Field Force Management Service**:Field technician management, work order dispatch, and real-time tracking
+- **Field Force Management Service**: Field technician management, work order dispatch, and real-time tracking
+- **Notification Service**: Real-time notifications and alerting for system events, user actions, and workflow status updates
 
 ### 4.3 Data Synchronization
-- **Event-Driven Architecture**: Asynchronous communication between services
+- **Event-Driven Architecture**: Synchronous communication between services
 - **Database Replication**: Multi-region data synchronization
 - **Search Index Updates**: Elasticsearch synchronization
 
@@ -1938,7 +2062,7 @@ erDiagram
 - User CDC is Done from Platform Database for User of Platform to Fiberneo User Table
 - Primary_Geo (L1,L2,L3,L4): Geometry Level Data Entry from Platfrom Data for Country , State , City , District level Data. 
 
-## Fiberneo API Details
+## 6. API Details
 
 API Documentation
 Swagger JSON Reference:
@@ -2100,8 +2224,6 @@ Error model:
 }
 ```
 
-Recommendations: Version as `/api/v1`; cursor-based pagination for large map queries; caching for lookup endpoints; 429 on burst writes.
-
 ## 7. RBAC & ABAC
 
 ### 7.1 Permission Groups
@@ -2159,7 +2281,6 @@ style="background: transparent;">
 
 ### 9.1 Performance Optimizations
 - **Database Indexing**: Optimized indexes for frequently queried columns
-- **Caching Strategy**: Redis caching for frequently accessed data
 - **Connection Pooling**: Optimized database connection management
 - **Async Processing**: Background processing for heavy operations
 

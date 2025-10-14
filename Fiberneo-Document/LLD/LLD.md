@@ -650,19 +650,39 @@ sequenceDiagram
       style="background: transparent;">
       </div>
 
-  - (d) Area View
+  - (d) Area View**
 
-    In the Area View you have many things to see for particular area , Documents , Projects on that area , Material Assets , WBS is to show all child entity create inside this area (Span,Conduit,Transmedia etc) and the right top button is the Overview Map view of that area
+    The Area View provides a comprehensive dashboard for managing and monitoring all aspects of a specific area within the network infrastructure. This centralized interface offers multiple perspectives and tools for effective area management.
 
-    <div align="Center">
-      <image src="../Image/LLD_Images/Area_View.png" alt="Area of Interest" height="300" 
+    #### **Key Features Available in Area View:**
+
+    - **📄 Documents** - Access and manage all documentation related to the area
+    - **📋 Projects** - View and track all projects associated with this area
+    - **📦 Material Assets** - Monitor material inventory and asset allocation
+    - **🏗️ WBS (Work Breakdown Structure)** - Display all child entities created within this area including:
+      - Spans
+      - Conduits
+      - Transmedia
+      - Structures
+      - Equipment
+    - **🗺️ Overview Map** - Interactive map view accessible via the top-right button
+
+    <div align="center">
+      <img src="../Image/LLD_Images/Area_View.png" alt="Area View Dashboard Interface" height="300" 
       style="background: transparent;">
-      </div>
+    </div>
 
-   Inside this Overview you can see all Entity on Map with their Different layer view also like Deviation adn Actual Entity map view 
+    #### **Overview Map Features**
 
-    <div align="Center">
-      <image src="../Image/LLD_Images/Area_Overview.png" alt="Area of Interest" height="300" 
+    The Overview Map provides a comprehensive visual representation of all entities within the area, offering multiple viewing modes:
+
+    - **📍 Entity Layer View** - Display all network entities on the map
+    - **📊 Deviation View** - Show planned vs. actual entity positions
+    - **🎯 Actual Entity View** - Real-time positioning of installed infrastructure
+    - **🔍 Layer Toggle** - Switch between different visualization layers
+
+    <div align="center">
+      <img src="../Image/LLD_Images/Area_Overview.png" alt="Area Overview Map with Entity Layers" height="300" 
       style="background: transparent;">
     </div>
 

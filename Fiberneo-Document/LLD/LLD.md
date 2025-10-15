@@ -866,7 +866,7 @@ You can create or edit a Site during the Perform Survey process, as well as edit
 
 ### 3.3 Construction , Testing and Maintenance
 
-- **Permit Dashboard**:  
+#### 3.3.1 Permit Dashboard**:  
   A centralized system for managing and tracking permissions required for survey entities. Span is usually the first physical entity created; during its creation, users must indicate whether a Right of Way (ROW) is needed by selecting the appropriate checkbox (as shown below). Afterward, during the survey phase, project tasks related to ROW can be managed directly from the Permit Dashboard—allowing project managers or relevant authorities to review, approve, or reject permission requests as necessary.
 
   <div align="center">
@@ -881,7 +881,8 @@ You can create or edit a Site during the Perform Survey process, as well as edit
     style="background: transparent; margin: 20px 0;">
   </div>
 
-#### 3.3.1  Permit Dashboard Features:
+- **Permit Dashboard Features**:
+
   - **Permission Tracking**: Monitor permission status for Area, Link, and Site entities
   - **Authority Integration**: Check with local government authorities for installation permissions
   - **Progress Monitoring**: Track permission application progress and approval status
@@ -1032,26 +1033,26 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ### 5.1 ER Diagram and Tables
 
-## Core Geographic Tables
+#### Core Geographic Tables
 
-### `PRIMARY_GEO_L1`
+##### `PRIMARY_GEO_L1`
 - **PK**: `ID` (int UNSIGNED)
 - **Key Attributes**: `NAME`, `CODE`
 - **Description**: Primary geographic level 1 (Country/Region)
 
-### `PRIMARY_GEO_L2`
+##### `PRIMARY_GEO_L2`
 - **PK**: `ID` (int UNSIGNED)
 - **FK**: `PRIMARY_GEO_L1_ID_FK` → `PRIMARY_GEO_L1(ID)`
 - **Key Attributes**: `NAME`, `CODE`
 - **Description**: Primary geographic level 2 (State/Province)
 
-### `PRIMARY_GEO_L3`
+##### `PRIMARY_GEO_L3`
 - **PK**: `ID` (int UNSIGNED)
 - **FK**: `PRIMARY_GEO_L2_ID_FK` → `PRIMARY_GEO_L2(ID)`
 - **Key Attributes**: `NAME`, `CODE`
 - **Description**: Primary geographic level 3 (City/District)
 
-### `PRIMARY_GEO_L4`
+##### `PRIMARY_GEO_L4`
 - **PK**: `ID` (int UNSIGNED)
 - **FK**: `PRIMARY_GEO_L3_ID_FK` → `PRIMARY_GEO_L3(ID)`
 - **Key Attributes**: `NAME`, `CODE`
@@ -1059,9 +1060,9 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Network Infrastructure Tables
+#### Network Infrastructure Tables
 
-### `AREA`
+##### `AREA`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
@@ -1075,7 +1076,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `CODE`, `NAME`, `SIZE`, `BOUNDARY_JSON`, `LATITUDE`, `LONGITUDE`
 - **Description**: Geographic areas for network planning and management
 
-### `LINK`
+##### `LINK`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
@@ -1089,7 +1090,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `CODE`, `NAME`, `DISTANCE_COVERED`, `BOUNDARY_JSON`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
 - **Description**: Network links connecting different points
 
-### `FACILITY`
+##### `FACILITY`
 - **PK**: `id` (Varchar (36))
 - **FK**: 
   - `PRIMARY_GEO_L1_FK` → `PRIMARY_GEO_L1(ID)`
@@ -1105,9 +1106,9 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Physical Infrastructure Tables
+#### Physical Infrastructure Tables
 
-### `STRUCTURE`
+##### `STRUCTURE`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1122,7 +1123,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`, `CODE`, `LATITUDE`, `LONGITUDE`
 - **Description**: Physical structures supporting network infrastructure
 
-### `CONDUIT`
+##### `CONDUIT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1134,7 +1135,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `CODE`, `NAME`, `START_LAT`, `START_LONG`, `END_LAT`, `END_LONG`
 - **Description**: Conduits for cable installation
 
-### `SPAN`
+##### `SPAN`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1148,7 +1149,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `CODE`, `NAME`
 - **Description**: Network spans between points
 
-### `TRANSMEDIA`
+##### `TRANSMEDIA`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1165,7 +1166,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `CODE`, `NAME`
 - **Description**: Transmission media (cables, fibers)
 
-### `REFERENCE_POINT`
+##### `REFERENCE_POINT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `STRUCTURE_ID` → `STRUCTURE(Varchar (36))`
@@ -1178,7 +1179,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
 - **Description**: Reference points for navigation
 
-### `OBSTACLE`
+##### `OBSTACLE`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1191,7 +1192,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`, `LATITUDE`, `LONGITUDE`, `TYPE`
 - **Description**: Obstacles in network deployment
 
-### `EQUIPMENT`
+##### `EQUIPMENT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `FACILITY_ID` → `FACILITY(Varchar (36))`
@@ -1210,9 +1211,9 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Equipment Related Tables
+#### Equipment Related Tables
 
-### `PORT`
+##### `PORT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `FACILITY_ID` → `FACILITY(Varchar (36))`
@@ -1222,7 +1223,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`
 - **Description**: Equipment ports for connections
 
-### `STRAND`
+##### `STRAND`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
@@ -1232,7 +1233,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`
 - **Description**: Individual fiber strands
 
-### `FLOOR`
+##### `FLOOR`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `FACILITY_ID` → `FACILITY(Varchar (36))`
@@ -1241,7 +1242,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`
 - **Description**: Facility floors
 
-### `ROOM`
+##### `ROOM`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `FLOOR_ID` → `FLOOR(Varchar (36))`
@@ -1251,7 +1252,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`
 - **Description**: Rooms within facilities
 
-### `RACK`
+##### `RACK`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `FACILITY_ID` → `FACILITY(Varchar (36))`
@@ -1261,7 +1262,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`
 - **Description**: Equipment racks
 
-### `SHELF`
+##### `SHELF`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `RACK_ID` → `RACK(Varchar (36))`
@@ -1272,9 +1273,9 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Customer Management Tables
+#### Customer Management Tables
 
-### `CUSTOMER_INFO`
+##### `CUSTOMER_INFO`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `CREATOR` → `USER(Varchar (36))`
@@ -1282,7 +1283,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`, `EMAIL`, `PHONE`
 - **Description**: Customer information
 
-### `CUSTOMER_ORDER`
+##### `CUSTOMER_ORDER`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `CUSTOMER_ID` → `CUSTOMER_INFO(Varchar (36))`
@@ -1291,7 +1292,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `ORDER_NUMBER`
 - **Description**: Customer orders
 
-### `CUSTOMER_SITE`
+##### `CUSTOMER_SITE`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `CUSTOMER_ORDER_ID` → `CUSTOMER_ORDER(Varchar (36))`
@@ -1307,9 +1308,9 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Circuit Management Tables
+#### Circuit Management Tables
 
-### `CIRCUIT`
+##### `CIRCUIT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `SPAN_ID` → `SPAN(Varchar (36))`
@@ -1318,7 +1319,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 - **Key Attributes**: `NAME`, `CODE`
 - **Description**: Network circuits
 
-### `SEGMENT`
+##### `SEGMENT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `LINK_ID` → `LINK(Varchar (36))`
@@ -1327,7 +1328,7 @@ A comprehensive testing and demonstration environment for exploring and experime
 
 ---
 
-## Actual Implementation Tables
+#### Actual Implementation Tables
 
 These tables store the final, approved data for each entity after the complete review and planning process. Each table mirrors its corresponding plan entity structure and includes mappings to both the original plan table and any deviation records.
 
@@ -1347,7 +1348,7 @@ These tables store the final, approved data for each entity after the complete r
 - `ACTUAL_OBSTACLE` - Final obstacle implementation data
 - `ACTUAL_REFERENCE_POINT` - Final reference point implementation data
 
-## Deviation Management Tables
+#### Deviation Management Tables
 
 These tables track changes and modifications made to plan entities during the review process. Each deviation table maintains the same structure as its corresponding plan entity and includes references to the original plan data.
 
@@ -1370,12 +1371,12 @@ These tables track changes and modifications made to plan entities during the re
 - `OBSTACLE_DEVIATION` - Obstacle modification records
 - `REFERENCE_POINT_DEVIATION` - Reference point modification records
 
-### `USER`
+##### `USER`
 - **PK**: `ID` (Varchar (36))
 - **Key Attributes**: `NAME`, `EMAIL`, `USERNAME`
 - **Description**: System users
 
-### `VENDOR`
+##### `VENDOR`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `CREATOR` → `USER(Varchar (36))`
@@ -1383,7 +1384,7 @@ These tables track changes and modifications made to plan entities during the re
 - **Key Attributes**: `NAME`, `CODE`, `CONTACT_INFO`
 - **Description**: Vendors and suppliers
 
-### `AREA_OF_INTEREST`
+##### `AREA_OF_INTEREST`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `AREA_ID` → `AREA(Varchar (36))`
@@ -1392,12 +1393,12 @@ These tables track changes and modifications made to plan entities during the re
 - **Key Attributes**: `TERRAIN_TYPE`, `ELEVATION_FROM_SEA_LEVEL`, `GEOGRAPHICAL_FEATURES`, `LAND_USE_TYPE`
 - **Description**: Areas of interest for network planning
 
-### `ATTRIBUTE`
+##### `ATTRIBUTE`
 - **PK**: `ID` (Varchar (36))
 - **Key Attributes**: `NAME`, `TYPE`, `VALUE`
 - **Description**: Generic attributes for entities
 
-### `NETWORK_EQUIPMENT`
+##### `NETWORK_EQUIPMENT`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `EQUIPMENT_ID` → `EQUIPMENT(Varchar (36))`
@@ -1405,12 +1406,12 @@ These tables track changes and modifications made to plan entities during the re
 - **Key Attributes**: `NAME`, `TYPE`
 - **Description**: Network equipment configurations
 
-### `ALARM_LIBRARY`
+##### `ALARM_LIBRARY`
 - **PK**: `ID` (Varchar (36))
 - **Key Attributes**: `NAME`, `DESCRIPTION`, `SEVERITY`
 - **Description**: Alarm definitions library
 
-### `ALARM_DETAILS`
+##### `ALARM_DETAILS`
 - **PK**: `ID` (Varchar (36))
 - **FK**: 
   - `ALARM_LIBRARY_ID` → `ALARM_LIBRARY(Varchar (36))`
@@ -1419,7 +1420,7 @@ These tables track changes and modifications made to plan entities during the re
 - **Key Attributes**: `ENTITY_TYPE`
 - **Description**: Alarm instances and details
 
-### `RULE_TEMPLATE`
+##### `RULE_TEMPLATE`
 - **PK**: `id` (Varchar (36))
 - **FK**: 
   - `CREATOR` → `USER(Varchar (36))`

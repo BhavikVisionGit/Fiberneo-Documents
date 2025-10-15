@@ -23,7 +23,7 @@
 4. [Integration Details](#4-integration-details)
 
 5. [Database Schema Design](#5-database-schema-design)
-   - 5.1 [ER Diagram and Tables (>40 tables)](#51-er-diagram-and-tables-40-tables)
+   - 5.1 [ER Diagram and Tables](#51-er-diagram-and-tables)
    - 5.2 [CDC Configuration](#52-cdc-configuration)
 
 6. [API Details](#6-api-details)
@@ -982,7 +982,7 @@ sequenceDiagram
 
 ## 5. Database Schema Design
 
-### 5.1 ER Diagram and Tables (>40 tables)
+### 5.1 ER Diagram and Tables
 
 ## Core Geographic Tables
 

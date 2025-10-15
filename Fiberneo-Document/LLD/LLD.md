@@ -678,11 +678,13 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
     - **📋 Projects** - View and track all projects associated with this area
     - **📦 Material Assets** - Monitor material inventory and asset allocation
     - **🏗️ WBS (Work Breakdown Structure)** - Display all child entities created within this area including:
+
       - Spans
       - Conduits
       - Transmedia
       - Structures
       - Equipment
+
     - **🗺️ Overview Map** - Interactive map view accessible via the top-right button
 
 
@@ -691,14 +693,13 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    - **Overview Map Features**
+    - **Overview Map Features** - The Overview Map provides a comprehensive visual representation of all entities within the area, offering multiple viewing modes
 
-    The Overview Map provides a comprehensive visual representation of all entities within the area, offering multiple viewing modes:
+    - 📍 Entity Layer View - Display all network entities on the map
+    - 📊 Deviation View - Show planned vs. actual entity positions
+    - 🎯 Actual Entity View - Real-time positioning of installed infrastructure
+    - 🔍 Layer Toggle - Switch between different visualization layers
 
-    - **📍 Entity Layer View** - Display all network entities on the map
-    - **📊 Deviation View** - Show planned vs. actual entity positions
-    - **🎯 Actual Entity View** - Real-time positioning of installed infrastructure
-    - **🔍 Layer Toggle** - Switch between different visualization layers
     Interactive map view accessible via the top-right button
 
     <div align="center">
@@ -830,31 +831,41 @@ You can create or edit a Site during the Perform Survey process, as well as edit
     style="background: transparent; margin: 20px 0;">
   </div>
 
-      Survey Process Details:
-      1. Map Interface: Interactive map showing the survey area where users can perform survey tasks
-      2. Side Panel: Provides icons and tools to create respective entities during survey
-      3. Entity Creation Hierarchy: 
-        - Span Creation: First step - draw span on the map
-        - Conduit Creation: Hover over existing span to add conduit within the span
-        - Transmedia Creation: Add transmedia after conduit creation
-        - Additional Entities: Create facilities, structures, equipment, obstacles, and reference points as needed
+<small>
 
-   ##### (c) Conduit Creation Process
+- **Survey Process Details:**
+  
+  1. **Map Interface**: Interactive map displaying the survey area, enabling users to perform survey tasks directly.
+  2. **Side Panel**: Offers icons and tools to create relevant entities during the survey process.
+  3. **Entity Creation Hierarchy:**
+     - **Span Creation**: Start by drawing a span on the map.
+     - **Conduit Creation**: Hover over an existing span to add a conduit within it.
+     - **Transmedia Creation**: Add transmedia after conduit creation.
+     - **Additional Entities**: Create facilities, structures, equipment, obstacles, and reference points as needed.
 
-  <div align="Center">
-    <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
-    style="background: transparent; margin: 20px 0;">
-  </div>
+</small>
 
-      Survey Workflow:
-        1. Project Selection: Select Area/Link Choose survey project from Project Trigger Option
-        2. Area Selection: Select specific area/link for survey on the map
-        3. Entity Creation: Use side panel tools to create network infrastructure entities
-        4. Hierarchical Creation: Follow the proper sequence for entity creation:
-         - Primary Sequence: Facility → Span → Structure → Conduit → Equipment → Transmedia
-         - Flexible Creation: Obstacle and ReferencePoint can be created at any time after Structure creation
-        5. Data Validation: Ensure all required entities are properly created and linked
-        6. Survey Completion: Submit survey data for review and approval
+##### (c) Conduit Creation Process
+
+<div align="center">
+  <img src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
+  style="background: transparent; margin: 20px 0;">
+</div>
+
+<small>
+
+- **Survey Workflow:**
+  
+  1. **Project Selection**: Select the Area or Link and choose the survey project from the Project Trigger option.
+  2. **Area Selection**: Select a specific area or link for the survey on the map.
+  3. **Entity Creation**: Use the side panel tools to create network infrastructure entities.
+  4. **Hierarchical Creation**: Follow the appropriate order for entity creation:
+     - **Primary Sequence**: Facility → Span → Structure → Conduit → Equipment → Transmedia
+     - **Flexible Creation**: Obstacles and Reference Points can be created at any time after a Structure is created.
+  5. **Data Validation**: Ensure all required entities are properly created and linked.
+  6. **Survey Completion**: Submit the survey data for review and approval.
+
+</small>
 
 ### 3.3 Construction , Testing and Maintenance
 

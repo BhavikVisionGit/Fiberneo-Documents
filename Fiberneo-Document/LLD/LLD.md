@@ -1592,7 +1592,7 @@ style="background: transparent; margin: 20px 0;">
 
 - **APM Monitoring**:
 <div align="center">
-<img src="../Image/LLD_Images/APM.png" alt="User Login Request Flow" height="500"
+<img src="../Image/LLD_Images/CPU_Graph.png" alt="User Login Request Flow" height="500"
 style="background: transparent; margin: 20px 0;">
 </div>
 

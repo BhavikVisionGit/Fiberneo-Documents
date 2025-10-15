@@ -626,7 +626,7 @@ sequenceDiagram
 
 ### 3.1 Area/Link/Site Management
 
-#### Area Management: Create/Edit Area geometry on map, attribute forms, stage transitions.
+#### 3.1.1 Area Management: Create/Edit Area geometry on map, attribute forms, stage transitions.
                    - Primary actions: Create, Import/Export, Stage update, View counts.
                    - Success: Entities persisted, visible on map, correct status and counts updated.
 
@@ -682,7 +682,7 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### **Overview Map Features**
+    - **Overview Map Features**
 
     The Overview Map provides a comprehensive visual representation of all entities within the area, offering multiple viewing modes:
 
@@ -698,7 +698,7 @@ sequenceDiagram
     </div>
 
   
-#### Link Management: Create/Edit Link geometry on map, attribute forms, stage transitions.
+#### 3.1.2 Link Management: Create/Edit Link geometry on map, attribute forms, stage transitions.
   - Primary actions: Create, Import/Export, Stage update, View counts.
   - Success: Entities persisted, visible on map, correct status and counts updated.
 
@@ -770,7 +770,7 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-#### Site Creation: You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
+#### 3.1.3 Site Management : You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
   
   - ##### (a) Site List
 
@@ -842,7 +842,7 @@ sequenceDiagram
   5. **Data Validation**: Ensure all required entities are properly created and linked
   6. **Survey Completion**: Submit survey data for review and approval
 
-### 3.3 Construction and Testing
+### 3.3 Construction , Testing and Maintenance
 
 - **Permit Dashboard**:  
   A centralized system for managing and tracking permissions required for survey entities. Span is usually the first physical entity created; during its creation, users must indicate whether a Right of Way (ROW) is needed by selecting the appropriate checkbox (as shown below). Afterward, during the survey phase, project tasks related to ROW can be managed directly from the Permit Dashboard—allowing project managers or relevant authorities to review, approve, or reject permission requests as necessary.
@@ -859,7 +859,7 @@ sequenceDiagram
     style="background: transparent; margin: 20px 0;">
   </div>
 
-  **Permit Dashboard Features:**
+#### 3.3.1  Permit Dashboard Features:
   - **Permission Tracking**: Monitor permission status for Area, Link, and Site entities
   - **Authority Integration**: Check with local government authorities for installation permissions
   - **Progress Monitoring**: Track permission application progress and approval status
@@ -878,7 +878,9 @@ sequenceDiagram
   - **Demand Assessment**: Identify high-demand areas for priority deployment
   - **Strategic Planning**: Optimize resource allocation across multiple areas in a region or city
 
-- **Customer Service Monitoring**: Real-time monitoring and maintenance system for deployed infrastructure.
+#### 3.3.2 Customer Service Monitoring: 
+
+Real-time monitoring and maintenance system for deployed infrastructure. Provides live device health status, outage detection and proactive fault resolution for uninterrupted customer service.
 
   <div align="center">
     <image src="../Image/LLD_Images/CustomerServiceMonitoring.png" alt="Customer Service Monitoring - Device Management" height="400" 
@@ -891,7 +893,11 @@ sequenceDiagram
   - **Maintenance Tracking**: Schedule and track maintenance activities for network equipment
   - **Service Quality**: Ensure optimal performance and customer satisfaction
 
-- **Build Decision**: Provides comprehensive analytics to support strategic fiber rollout decisions and future planning
+#### 3.3.3 Build Decision: 
+
+Provides comprehensive analytics to support strategic fiber rollout decisions and future planning.
+This module enables users to visualize potential deployment areas and evaluate build versus buy options.
+Key recommendations are generated to optimize investment and align infrastructure goals with business priorities.
 
   <div align="center">
     <image src="../Image/LLD_Images/BuildDecision.png" alt="Build Decision Analytics" height="400" 
@@ -905,7 +911,11 @@ sequenceDiagram
   - Small and large business counts
   - Optimization tools for fiber business strategy and rollout planning
 
-- **ILD (International Line Drawing)**: Central hub management system for international fiber connections and data center operations
+#### 3.3.4 ILD (International Line Drawing): 
+
+Central hub management system for international fiber connections and data center operations.
+Enables end-to-end visibility and management of cross-border fiber links, peering points, and data centers.
+Supports dynamic configuration, monitoring, and planning for international network circuits.
 
    <div align="center">
     <image src="../Image/LLD_Images/ILD.png" alt="International Line Drawing" height="400" 
@@ -919,7 +929,9 @@ sequenceDiagram
     style="background: transparent; margin: 20px 0;">
   </div>
 
-- **Circuit Management**: A circuit represents the complete end-to-end connection between source and destination points in the fiber network. It consists of multiple structures and sites interconnected through transmission media, forming a comprehensive network path.
+#### 3.3.5 Circuit Management: 
+
+A circuit represents the complete end-to-end connection between source and destination points in the fiber network. It consists of multiple structures and sites interconnected through transmission media, forming a comprehensive network path.
 
   **Single Line Diagram (SLD) View**: The system provides a visual representation of how circuits are connected across the network infrastructure, as shown in the image below:
 
@@ -935,7 +947,9 @@ sequenceDiagram
     style="background: transparent; margin: 20px 0;">
   </div>
 
-- **Reporting and Analytics**: The reporting system provides comprehensive analytics and reporting capabilities on a monthly and yearly basis. Users can generate custom reports using the Analytics Service for various entities based on specific conditions and requirements.
+#### 3.3.6 Reporting and Analytics: 
+
+The reporting system provides comprehensive analytics and reporting capabilities on a monthly and yearly basis. Users can generate custom reports using the Analytics Service for various entities based on specific conditions and requirements.
 
   **Report Module Interface**: Access to various reporting functions through the Fiberneo Home Page Module, as shown below:
 
@@ -951,7 +965,10 @@ sequenceDiagram
     style="background: transparent; margin: 20px 0;">
   </div>
 
-- **GIS Playground**: A comprehensive testing and demonstration environment for exploring and experimenting with Geographic Information System (GIS) data. This module allows users to:
+#### 3.3.7 GIS Playground: 
+
+A comprehensive testing and demonstration environment for exploring and experimenting with Geographic Information System (GIS) data. This module allows users to:
+
   - Visualize interactive maps with multiple data layers
   - Import and export data in various required formats
   - Perform spatial analysis and data manipulation

@@ -114,9 +114,9 @@ graph TD
 
 ### 2.2 Application Flow - Sequence Diagrams
 
-### 2.2.1 Entity Creation Flow
+#### 2.2.1 Entity Creation Flow
 
-#### Create Area, Link and Site on UI on Map
+##### Create Area, Link and Site on UI on Map
 
 ```mermaid
 sequenceDiagram
@@ -139,9 +139,9 @@ sequenceDiagram
   GW-->>UI: Render entity on map
 ```
 
-### 2.2.2 Project Stage Transition Flow
+#### 2.2.2 Project Stage Transition Flow
 
-#### Project Flows (high-level)
+##### Project Flows (high-level)
 
 ```mermaid
 sequenceDiagram
@@ -159,9 +159,9 @@ sequenceDiagram
   FN->>DB: persist status, audit
 ```
 
-### 2.2.3 Area Project Flow
+#### 2.2.3 Area Project Flow
 
-#### (a) Perform Area Of Interest (AOI) 
+##### (a) Perform Area Of Interest (AOI) 
 
 ```mermaid
 sequenceDiagram
@@ -188,7 +188,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-#### (b) Area Planning Survey
+##### (b) Area Planning Survey
 
 ```mermaid
 sequenceDiagram
@@ -276,7 +276,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-### (c) Area Installation and Construction
+##### (c) Area Installation and Construction
 
 ```mermaid
 sequenceDiagram
@@ -337,9 +337,9 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-### 2.2.4 Link Project Task
+#### 2.2.4 Link Project Task
 
-#### (a) Link Planning and Survey
+##### (a) Link Planning and Survey
 
 The Link Planning and Survey process follows the exact same workflow and structure as the Area Planning and Survey module.
 
@@ -353,7 +353,7 @@ This includes:
 
 👉 **Essentially, all task stages, data flow, and approval checkpoints mirror the existing Area Planning and Survey workflow, ensuring consistency and standardization.**
 
-#### (b) Link Installation and Construction
+##### (b) Link Installation and Construction
 
 The Link Installation and Construction process is aligned with the Area Installation and Construction workflow.
 
@@ -366,7 +366,7 @@ This includes:
 - **Testing & Commissioning**: Conducting OTDR testing, link validation, and final acceptance.
 - **Documentation & Handover**: Capturing as-built data, uploading test reports, and closing the task with approvals.
 
-### (c) FiberLink HOTO
+##### (c) FiberLink HOTO
 
 ```mermaid
 sequenceDiagram
@@ -395,7 +395,7 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
-### (d) OLT Installation and Commissioning (Site)
+##### (d) OLT Installation and Commissioning (Site)
 
 ```mermaid
 sequenceDiagram
@@ -474,7 +474,7 @@ sequenceDiagram
   BD-->FN: Status Workflow Updated
 ```
 
-### (e) Survey and Acquisition
+##### (e) Survey and Acquisition
 
 ```mermaid
 sequenceDiagram
@@ -529,7 +529,7 @@ sequenceDiagram
   BD->>FN: Status Updated
 ```
 
-### (f) Site Design and Construction
+##### (f) Site Design and Construction
 
 ```mermaid
 sequenceDiagram

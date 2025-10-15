@@ -623,7 +623,7 @@ sequenceDiagram
 
    <div align="Center">
     <image src="../Image/LLD_Images/AreaList.png" alt="User Login Request Flow" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
     </div>
 
   - (b) Area Creation
@@ -634,23 +634,23 @@ sequenceDiagram
 
   - (c) Area of Interest 
 
-    **Area Prioritization Process:**
+    Area Prioritization Process:**
     
     (i). **Select and Trigger Project:** Choose the area to prioritize and trigger the project as shown below:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AOI_Project.png" alt="Area of Interest Project" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
       </div>
 
     (ii). **Complete Workflow:** Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AreaofInterest.png" alt="Area of Interest" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
       </div>
 
-  - (d) Area View**
+  - (d) Area View
 
     The Area View provides a comprehensive dashboard for managing and monitoring all aspects of a specific area within the network infrastructure. This centralized interface offers multiple perspectives and tools for effective area management.
 
@@ -669,7 +669,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/Area_View.png" alt="Area View Dashboard Interface" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
     #### **Overview Map Features**
@@ -683,7 +683,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/Area_Overview.png" alt="Area Overview Map with Entity Layers" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
   
@@ -696,7 +696,7 @@ sequenceDiagram
 
    <div align="Center">
     <image src="../Image/LLD_Images/LinkList.png" alt="User Login Request Flow" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
     </div>
 
 - (b) Link Creation 
@@ -715,7 +715,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/Link_SD_AR.png" alt="Link Source and Destination Selection" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
     #### **Step 2: Generate Path**
@@ -724,7 +724,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/Link_Create_AR.png" alt="Get Path Button" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
     #### **Step 3: Apply Auto Rules**
@@ -733,7 +733,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/AR_GetPath.png" alt="Configure Rule Button" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
     #### **Step 4: Select and Apply Rules**
@@ -747,7 +747,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/AutoRule.png" alt="Auto Rule Configuration" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
     #### **Step 5: Review Generated Entities**
@@ -756,7 +756,7 @@ sequenceDiagram
 
     <div align="center">
       <img src="../Image/LLD_Images/LinkCreate_Entity.png" alt="Generated Link Entities" height="300" 
-      style="background: transparent;">
+      style="background: transparent; margin: 20px 0;">
     </div>
 
 - **Site Creation**: You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
@@ -765,21 +765,21 @@ sequenceDiagram
 
  <div align="Center">
     <image src="../Image/LLD_Images/SitePage.png" alt="User Login Request Flow" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
     </div>
 
   - (b) Site Project
 
  <div align="Center">
     <image src="../Image/LLD_Images/SiteProject.png" alt="User Login Request Flow" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
     </div>
 
   - (c) Site Create 
 
    <div align="Center">
     <image src="../Image/LLD_Images/SiteCreate.png" alt="User Login Request Flow" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
     </div>
 
 ### 3.2 Survey and Planning
@@ -793,7 +793,7 @@ sequenceDiagram
 
   <div align="left">
     <image src="../Image/LLD_Images/ProjectTrigger.png" alt="Project Trigger - Survey Project Page" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   - (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
@@ -801,7 +801,7 @@ sequenceDiagram
 
   <div align="left">
     <image src="../Image/LLD_Images/PerformSurvey.png" alt="Survey Map Interface - Area Survey" height="300" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Survey Process Details:**
@@ -817,7 +817,7 @@ sequenceDiagram
 
   <div align="left">
     <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Survey Workflow:**
@@ -837,14 +837,14 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/SpanCreate.png" alt="Permit Dashboard - Permission Management" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   The BI Dashboard provides a comprehensive view of permission statuses across Area, Link, and Site entities, allowing users to monitor authorization progress and access various important insights in one place.
 
   <div align="center">
     <image src="../Image/LLD_Images/PermitDashBoard.png" alt="Permit Dashboard - Permission Management" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Permit Dashboard Features:**
@@ -857,7 +857,7 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/AreaPriotization.png" alt="Area Prioritization - Strategic Selection" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Area Prioritization Features:**
@@ -870,7 +870,7 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/CustomerServiceMonitoring.png" alt="Customer Service Monitoring - Device Management" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Customer Service Monitoring Features:**
@@ -883,7 +883,7 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/BuildDecision.png" alt="Build Decision Analytics" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Key Features:**
@@ -897,14 +897,14 @@ sequenceDiagram
 
    <div align="center">
     <image src="../Image/LLD_Images/ILD.png" alt="International Line Drawing" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Link Connection Details:** The system displays comprehensive information about how specific fiber links are connected internationally:
 
   <div align="center">
     <image src="../Image/LLD_Images/ILD_Detail.png" alt="ILD Link Details" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
 - **Circuit Management**: A circuit represents the complete end-to-end connection between source and destination points in the fiber network. It consists of multiple structures and sites interconnected through transmission media, forming a comprehensive network path.
@@ -913,14 +913,14 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/SLD_View.png" alt="Single Line Diagram View" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Circuit List View**: Comprehensive listing of all circuits with their status, connections, and operational details:
 
   <div align="center">
     <image src="../Image/LLD_Images/Circuit_View.png" alt="Circuit List View" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
 - **Reporting and Analytics**: The reporting system provides comprehensive analytics and reporting capabilities on a monthly and yearly basis. Users can generate custom reports using the Analytics Service for various entities based on specific conditions and requirements.
@@ -929,14 +929,14 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/Report_Module_View.png" alt="Report Module Interface" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
   **Report Dashboard**: Business Intelligence (BI) representation of overall report data with interactive dashboards and visualizations:
 
   <div align="center">
     <image src="../Image/LLD_Images/Report_Dashboard.png" alt="Report Dashboard" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
 - **GIS Playground**: A comprehensive testing and demonstration environment for exploring and experimenting with Geographic Information System (GIS) data. This module allows users to:
@@ -947,7 +947,7 @@ sequenceDiagram
 
   <div align="center">
     <image src="../Image/LLD_Images/GIS_View.png" alt="GIS Playground Interface" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
 ## 4. Integration Details
@@ -1382,7 +1382,7 @@ ER Diagram :
 
   <div align="center">
     <image src="../Image/LLD_Images/ER_Diagram.png" alt="Permit Dashboard - Permission Management" height="400" 
-    style="background: transparent;">
+    style="background: transparent; margin: 20px 0;">
   </div>
 
 ### 5.2 CDC Configuration
@@ -1578,19 +1578,19 @@ This document provides a comprehensive mapping of all permission scopes and thei
 - **Metrics Monitoring**:
 <div align="center">
 <img src="../Image/LLD_Images/metrics.png" alt="User Login Request Flow" height="500" 
-style="background: transparent;">
+style="background: transparent; margin: 20px 0;">
 </div>
 
 - **Logs Monitoring**:
 <div align="center">
 <img src="../Image/LLD_Images/Logs.png" alt="User Login Request Flow" height="500" 
-style="background: transparent;">
+style="background: transparent; margin: 20px 0;">
 </div>
 
 - **APM Monitoring**:
 <div align="center">
-<img src="../Image/LLD_Images/APM.png" alt="User Login Request Flow" height="500" 
-style="background: transparent;">
+<img src="../Image/LLD_Images/APM.png" alt="User Login Request Flow" height="500"
+style="background: transparent; margin: 20px 0;">
 </div>
 
 ### 8.1 Key Metrics

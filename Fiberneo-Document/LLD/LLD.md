@@ -276,6 +276,13 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
+-- This is the workflow
+
+  <div align="Center">
+      <image src="../Image/LLD_Images/Area_Installation.png" alt="Link Planning Flow" height="300" 
+      style="background: transparent; margin: 20px 0;">
+  </div>
+
 ##### (c) Area Installation and Construction
 
 ```mermaid
@@ -337,34 +344,38 @@ sequenceDiagram
   PG->>BD: Associate Form or Task
 ```
 
+-- This is the workflow
+
+  <div align="Center">
+      <image src="../Image/LLD_Images/Area_Installation.png" alt="Link Planning Flow" height="300" 
+      style="background: transparent; margin: 20px 0;">
+  </div>
+
 #### 2.2.4 Link Project Task
 
 ##### (a) Link Planning and Survey
 
 The Link Planning and Survey process follows the exact same workflow and structure as the Area Planning and Survey module.
 
-This includes:
+This is the workflow :
 
-- **Survey Initiation**: Defining the start and end points of the link.
-- **Route Planning**: Mapping the link path using available base maps, network layers, and route constraints.
-- **Feasibility Study**: Identifying physical and environmental challenges (e.g., road crossings, water bodies, or private land).
-- **Field Survey & Data Collection**: Capturing accurate GIS data, alignment details, and site photographs.
-- **Validation & Approval**: Reviewing collected data, verifying technical feasibility, and approving the survey for the next phase.
+  <div align="Center">
+      <image src="../Image/LLD_Images/Link_Planning.png" alt="Link Planning Flow" height="300" 
+      style="background: transparent; margin: 20px 0;">
+  </div>
 
-👉 **Essentially, all task stages, data flow, and approval checkpoints mirror the existing Area Planning and Survey workflow, ensuring consistency and standardization.**
 
 ##### (b) Link Installation and Construction
 
 The Link Installation and Construction process is aligned with the Area Installation and Construction workflow.
 
-This includes:
+This is the workflow :
 
-- **Work Order Creation**: Generating BOQs, assigning contractors, and setting execution timelines.
-- **Material Planning & Dispatch**: Identifying required materials (e.g., fiber cables, conduits) and coordinating logistics.
-- **Execution on Ground**: Implementing trenching, ducting, cable laying, jointing, and other link-related civil and fiber works.
-- **Quality & Safety Checks**: Ensuring construction meets technical standards and safety guidelines.
-- **Testing & Commissioning**: Conducting OTDR testing, link validation, and final acceptance.
-- **Documentation & Handover**: Capturing as-built data, uploading test reports, and closing the task with approvals.
+  <div align="Center">
+      <image src="../Image/LLD_Images/Link_Installation.png" alt="Link Planning Flow" height="300" 
+      style="background: transparent; margin: 20px 0;">
+  </div>
+
 
 ##### (c) FiberLink HOTO
 

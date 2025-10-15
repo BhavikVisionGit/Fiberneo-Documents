@@ -654,14 +654,14 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
 
   - ##### (c) Area of Interest (Prioritization Process)
     
-   Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below:
+      Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below
     
     <div align="Center">
       <image src="../Image/LLD_Images/AOI_Project.png" alt="Area of Interest Project" height="300" 
       style="background: transparent; margin: 20px 0;">
       </div>
 
-   Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
+      Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized
     
     <div align="Center">
       <image src="../Image/LLD_Images/AreaofInterest.png" alt="Area of Interest" height="300" 

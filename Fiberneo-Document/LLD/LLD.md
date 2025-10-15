@@ -16,9 +16,18 @@
 
 3. [Solution Features and User Interface](#3-solution-features-and-user-interface)
    - 3.1 [Area/Link/Site Management](#31-arealinksite-management)
+     - 3.1.1 [Area Management](#311-area-management-createedit-area-geometry-on-map-attribute-forms-stage-transitions)
+     - 3.1.2 [Link Management](#312-link-management-createedit-link-geometry-on-map-attribute-forms-stage-transitions)
+     - 3.1.3 [Site Management](#313-site-management--you-can-create-or-edit-a-site-during-the-perform-survey-process-as-well-as-edit-from-the-dedicated-site-page-both-workflows-allow-full-access-to-site-configuration-and-updates)
    - 3.2 [Survey and Planning](#32-survey-and-planning)
-   - 3.3 [Construction and Testing](#33-construction-and-testing)
-   - 3.4 [Splicing and Ports](#34-splicing-and-port-management-ui)
+   - 3.3 [Construction, Testing and Maintenance](#33-construction--testing-and-maintenance)
+     - 3.3.1 [Permit Dashboard Features](#331--permit-dashboard-features)
+     - 3.3.2 [Customer Service Monitoring](#332-customer-service-monitoring)
+     - 3.3.3 [Build Decision](#333-build-decision)
+     - 3.3.4 [ILD (International Line Drawing)](#334-ild-international-line-drawing)
+     - 3.3.5 [Circuit Management](#335-circuit-management)
+     - 3.3.6 [Reporting and Analytics](#336-reporting-and-analytics)
+     - 3.3.7 [GIS Playground](#337-gis-playground)
 
 4. [Integration Details](#4-integration-details)
 

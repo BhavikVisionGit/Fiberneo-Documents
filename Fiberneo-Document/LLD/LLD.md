@@ -654,14 +654,14 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
 
   - ##### (c) Area of Interest (Prioritization Process)
     
-  ###### Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below:
+  ##### Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AOI_Project.png" alt="Area of Interest Project" height="300" 
       style="background: transparent; margin: 20px 0;">
       </div>
 
-  ###### Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
+  ##### Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AreaofInterest.png" alt="Area of Interest" height="300" 
@@ -672,7 +672,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
 
     The Area View provides a comprehensive dashboard for managing and monitoring all aspects of a specific area within the network infrastructure. This centralized interface offers multiple perspectives and tools for effective area management.
 
-    ###### **Key Features Available in Area View:**
+    ##### **Key Features Available in Area View:**
 
     - **📄 Documents** - Access and manage all documentation related to the area
     - **📋 Projects** - View and track all projects associated with this area
@@ -738,7 +738,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### Step 2: Generate Path
+    ##### Step 2: Generate Path
     
     Click on the **"Get Path"** button to automatically calculate the optimal route between the selected source and destination points.
 
@@ -747,7 +747,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### Step 3: Apply Auto Rules
+    ##### Step 3: Apply Auto Rules
     
     After the system generates the sorted path, you can apply automated rules by clicking the **"Configure Rule"** button.
 
@@ -756,7 +756,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### Step 4: Select and Apply Rules
+    ##### Step 4: Select and Apply Rules
     
     Choose from the available rule list to automatically create the respective entities for the link. The Auto Rule system can generate:
 
@@ -771,7 +771,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### Step 5: Review Generated Entities
+    ##### Step 5: Review Generated Entities
     
     Once the rules are applied, the system automatically creates all associated entities for the link, providing a complete network infrastructure setup.
 

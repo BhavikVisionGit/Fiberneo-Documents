@@ -833,15 +833,15 @@ You can create or edit a Site during the Perform Survey process, as well as edit
 
 <small>
 
-- **Survey Process Details:**
+- Survey Process Details:
   
-  1. **Map Interface**: Interactive map displaying the survey area, enabling users to perform survey tasks directly.
-  2. **Side Panel**: Offers icons and tools to create relevant entities during the survey process.
-  3. **Entity Creation Hierarchy:**
-     - **Span Creation**: Start by drawing a span on the map.
-     - **Conduit Creation**: Hover over an existing span to add a conduit within it.
-     - **Transmedia Creation**: Add transmedia after conduit creation.
-     - **Additional Entities**: Create facilities, structures, equipment, obstacles, and reference points as needed.
+  1. Map Interface: Interactive map displaying the survey area, enabling users to perform survey tasks directly.
+  2. Side Panel: Offers icons and tools to create relevant entities during the survey process.
+  3. Entity Creation Hierarchy:
+     - Span Creation: Start by drawing a span on the map.
+     - Conduit Creation: Hover over an existing span to add a conduit within it.
+     - Transmedia Creation: Add transmedia after conduit creation.
+     - Additional Entities: Create facilities, structures, equipment, obstacles, and reference points as needed.
 
 </small>
 
@@ -852,20 +852,17 @@ You can create or edit a Site during the Perform Survey process, as well as edit
   style="background: transparent; margin: 20px 0;">
 </div>
 
-<small>
-
-- **Survey Workflow:**
+- Survey Workflow:
   
-  1. **Project Selection**: Select the Area or Link and choose the survey project from the Project Trigger option.
-  2. **Area Selection**: Select a specific area or link for the survey on the map.
-  3. **Entity Creation**: Use the side panel tools to create network infrastructure entities.
-  4. **Hierarchical Creation**: Follow the appropriate order for entity creation:
-     - **Primary Sequence**: Facility → Span → Structure → Conduit → Equipment → Transmedia
-     - **Flexible Creation**: Obstacles and Reference Points can be created at any time after a Structure is created.
-  5. **Data Validation**: Ensure all required entities are properly created and linked.
-  6. **Survey Completion**: Submit the survey data for review and approval.
-
-</small>
+  1. Project Selection: Select the Area or Link and choose the survey project from the Project Trigger option.
+  2. Area Selection: Select a specific area or link for the survey on the map.
+  3. Entity Creation: Use the side panel tools to create network infrastructure entities.
+  4. Hierarchical Creation: Follow the appropriate order for entity creation:
+     - Primary Sequence: Facility → Span → Structure → Conduit → Equipment → Transmedia
+     - Flexible Creation: Obstacles and Reference Points can be created at any time after a Structure is created.
+  5. Data Validation: Ensure all required entities are properly created and linked.
+  6. Survey Completion: Submit the survey data for review and approval.
+ 
 
 ### 3.3 Construction , Testing and Maintenance
 

@@ -667,6 +667,7 @@ sequenceDiagram
       - Equipment
     - **🗺️ Overview Map** - Interactive map view accessible via the top-right button
 
+
     <div align="center">
       <img src="../Image/LLD_Images/Area_View.png" alt="Area View Dashboard Interface" height="300" 
       style="background: transparent; margin: 20px 0;">
@@ -680,6 +681,7 @@ sequenceDiagram
     - **📊 Deviation View** - Show planned vs. actual entity positions
     - **🎯 Actual Entity View** - Real-time positioning of installed infrastructure
     - **🔍 Layer Toggle** - Switch between different visualization layers
+    Interactive map view accessible via the top-right button
 
     <div align="center">
       <img src="../Image/LLD_Images/Area_Overview.png" alt="Area Overview Map with Entity Layers" height="300" 
@@ -791,15 +793,16 @@ sequenceDiagram
   - (a) Project Trigger Page - Survey Project Overview
 
 
-  <div align="left">
+  <div align="Center">
     <image src="../Image/LLD_Images/ProjectTrigger.png" alt="Project Trigger - Survey Project Page" height="400" 
     style="background: transparent; margin: 20px 0;">
   </div>
 
+
   - (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
 
 
-  <div align="left">
+  <div align="Center">
     <image src="../Image/LLD_Images/PerformSurvey.png" alt="Survey Map Interface - Area Survey" height="300" 
     style="background: transparent; margin: 20px 0;">
   </div>
@@ -815,7 +818,7 @@ sequenceDiagram
 
   - (c) Conduit Creation Process
 
-  <div align="left">
+  <div align="Center">
     <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
     style="background: transparent; margin: 20px 0;">
   </div>
@@ -1394,7 +1397,7 @@ ER Diagram :
 
 API Documentation
 Swagger JSON Reference:
-- [Fiberneo API Documentation](https://github.com/BhavikVisionGit/Fiberneo-Documents/blob/main/Fiberneo-Document/Api-Doc-Swagger/)
+- [Fiberneo API Documentation](https://github.com/visionwaves/fiberneo/blob/dev/Fiberneo-Document/API_Doc/FiberNeoSwagger_12Sep.json)
 
 Java Docs
 - [Fiberneo JAVA Documentation](https://github.com/BhavikVisionGit/Fiberneo-Documents/tree/main/Fiberneo-Document/Java-Doc/11-09-2025/)
@@ -1557,7 +1560,7 @@ Error model:
 ### 7.1 Permission Groups
 
 **Permission group Reference**:
-- [Fiberneo Permission group](https://github.com/BhavikVisionGit/Fiberneo-Documents/tree/main/Fiberneo-Document/LLD/LLD_Data)
+- [Fiberneo Permission group](https://github.com/visionwaves/fiberneo/blob/dev/Fiberneo-Document/LLD/LLD_DATA/PermissionGroup.csv)
 ### 7.2 Profile Template
 - [Fiberneo Profile template](./FIBERNEO_Profile_Template/)
 

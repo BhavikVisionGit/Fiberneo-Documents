@@ -729,7 +729,7 @@ Create/Edit Area geometry on map, attribute forms, stage transitions.Primary act
 
     The Auto Rule feature allows for automated creation of network links with predefined configurations. This streamlines the link creation process by automatically generating associated entities based on configured rules.
 
-    ###### Step 1: Select Source and Destination
+    ##### Step 1: Select Source and Destination
     
     Begin by selecting the source and destination points for your link in the Link Creation interface.
 

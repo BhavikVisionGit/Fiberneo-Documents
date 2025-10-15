@@ -635,9 +635,9 @@ sequenceDiagram
 
 ### 3.1 Area/Link/Site Management
 
-#### 3.1.1 Area Management: Create/Edit Area geometry on map, attribute forms, stage transitions.
-                   - Primary actions: Create, Import/Export, Stage update, View counts.
-                   - Success: Entities persisted, visible on map, correct status and counts updated.
+#### 3.1.1 Area Management: 
+
+Create/Edit Area geometry on map, attribute forms, stage transitions.Primary actions Create, Import/Export, Stage update, View counts.Success: Entities persisted, visible on map, correct status and counts updated.
 
   - ##### (a) Area List
 
@@ -654,14 +654,14 @@ sequenceDiagram
 
   - ##### (c) Area of Interest (Prioritization Process)
     
-  - ###### (i). Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below:
+  ###### Select and Trigger Project: Choose the area to prioritize and trigger the project as shown below:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AOI_Project.png" alt="Area of Interest Project" height="300" 
       style="background: transparent; margin: 20px 0;">
       </div>
 
-  - ###### (ii). Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
+  ###### Complete Workflow: Fill out the prioritization form with all required details and approve the project to mark the area as prioritized:
     
     <div align="Center">
       <image src="../Image/LLD_Images/AreaofInterest.png" alt="Area of Interest" height="300" 
@@ -729,7 +729,7 @@ sequenceDiagram
 
     The Auto Rule feature allows for automated creation of network links with predefined configurations. This streamlines the link creation process by automatically generating associated entities based on configured rules.
 
-    ###### **Step 1: Select Source and Destination**
+    ###### Step 1: Select Source and Destination
     
     Begin by selecting the source and destination points for your link in the Link Creation interface.
 
@@ -738,7 +738,7 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### **Step 2: Generate Path**
+    ###### Step 2: Generate Path
     
     Click on the **"Get Path"** button to automatically calculate the optimal route between the selected source and destination points.
 
@@ -747,7 +747,7 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### **Step 3: Apply Auto Rules**
+    ###### Step 3: Apply Auto Rules
     
     After the system generates the sorted path, you can apply automated rules by clicking the **"Configure Rule"** button.
 
@@ -756,21 +756,22 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### **Step 4: Select and Apply Rules**
+    ###### Step 4: Select and Apply Rules
     
     Choose from the available rule list to automatically create the respective entities for the link. The Auto Rule system can generate:
-    - **Spans** - Physical connections between points
-    - **Conduits** - Protective pathways for cables
-    - **Transmedia** - Media conversion points
-    - **Structures** - Physical infrastructure elements
-    - **Equipment** - Network devices and hardware
+
+    - Spans - Physical connections between points
+    - Conduits - Protective pathways for cables
+    - Transmedia - Media conversion points
+    - Structures - Physical infrastructure elements
+    - Equipment - Network devices and hardware
 
     <div align="center">
       <img src="../Image/LLD_Images/AutoRule.png" alt="Auto Rule Configuration" height="300" 
       style="background: transparent; margin: 20px 0;">
     </div>
 
-    ###### **Step 5: Review Generated Entities**
+    ###### Step 5: Review Generated Entities
     
     Once the rules are applied, the system automatically creates all associated entities for the link, providing a complete network infrastructure setup.
 
@@ -779,23 +780,25 @@ sequenceDiagram
       style="background: transparent; margin: 20px 0;">
     </div>
 
-#### 3.1.3 Site Management : You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
+#### 3.1.3 Site Management : 
+
+You can create or edit a Site during the Perform Survey process, as well as edit from the dedicated Site Page. Both workflows allow full access to site configuration and updates.
   
-  - ##### (a) Site List
+  ##### (a) Site List
 
  <div align="Center">
     <image src="../Image/LLD_Images/SitePage.png" alt="User Login Request Flow" height="300" 
     style="background: transparent; margin: 20px 0;">
     </div>
 
-  - ##### (b) Site Project
+  ##### (b) Site Project
 
  <div align="Center">
     <image src="../Image/LLD_Images/SiteProject.png" alt="User Login Request Flow" height="300" 
     style="background: transparent; margin: 20px 0;">
     </div>
 
-  - ##### (c) Site Create 
+  ##### (c) Site Create 
 
    <div align="Center">
     <image src="../Image/LLD_Images/SiteCreate.png" alt="User Login Request Flow" height="300" 
@@ -804,11 +807,13 @@ sequenceDiagram
 
 ### 3.2 Survey and Planning
 
-- #### **Perform Survey**: Performing roll-out task creating Span, Conduit, Transmedia, Facilities on Area or Link.
+#### **Perform Survey**: 
+
+  - Performing roll-out task creating Span, Conduit, Transmedia, Facilities on Area or Link.
   - Actions: Add span, conduit, transmedia, facilities, structures, equipment, obstacles, reference-point.
   - Success: All the Child Entity Created on that particular Area, Link.
 
-  - ##### (a) Project Trigger Page - Survey Project Overview
+  ##### (a) Project Trigger Page - Survey Project Overview
 
 
   <div align="Center">
@@ -817,7 +822,7 @@ sequenceDiagram
   </div>
 
 
-  - ##### (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
+  ##### (b) Survey Map Interface - Area/Link Survey with Entity Creation Tools
 
 
   <div align="Center">
@@ -825,31 +830,31 @@ sequenceDiagram
     style="background: transparent; margin: 20px 0;">
   </div>
 
-  **Survey Process Details:**
-  - **Map Interface**: Interactive map showing the survey area where users can perform survey tasks
-  - **Side Panel**: Provides icons and tools to create respective entities during survey
-  - **Entity Creation Hierarchy**: 
-    - **Span Creation**: First step - draw span on the map
-    - **Conduit Creation**: Hover over existing span to add conduit within the span
-    - **Transmedia Creation**: Add transmedia after conduit creation
-    - **Additional Entities**: Create facilities, structures, equipment, obstacles, and reference points as needed
+      Survey Process Details:
+      1. Map Interface: Interactive map showing the survey area where users can perform survey tasks
+      2. Side Panel: Provides icons and tools to create respective entities during survey
+      3. Entity Creation Hierarchy: 
+        - Span Creation: First step - draw span on the map
+        - Conduit Creation: Hover over existing span to add conduit within the span
+        - Transmedia Creation: Add transmedia after conduit creation
+        - Additional Entities: Create facilities, structures, equipment, obstacles, and reference points as needed
 
-  - ##### (c) Conduit Creation Process
+   ##### (c) Conduit Creation Process
 
   <div align="Center">
     <image src="../Image/LLD_Images/ConduitHover.png" alt="Conduit Creation Process" height="200" 
     style="background: transparent; margin: 20px 0;">
   </div>
 
-  **Survey Workflow:**
-  1. **Project Selection**: Select Area/Link Choose survey project from Project Trigger Option
-  2. **Area Selection**: Select specific area/link for survey on the map
-  3. **Entity Creation**: Use side panel tools to create network infrastructure entities
-  4. **Hierarchical Creation**: Follow the proper sequence for entity creation:
-   - **Primary Sequence**: Facility → Span → Structure → Conduit → Equipment → Transmedia
-   - **Flexible Creation**: Obstacle and ReferencePoint can be created at any time after Structure creation
-  5. **Data Validation**: Ensure all required entities are properly created and linked
-  6. **Survey Completion**: Submit survey data for review and approval
+      Survey Workflow:
+        1. Project Selection: Select Area/Link Choose survey project from Project Trigger Option
+        2. Area Selection: Select specific area/link for survey on the map
+        3. Entity Creation: Use side panel tools to create network infrastructure entities
+        4. Hierarchical Creation: Follow the proper sequence for entity creation:
+         - Primary Sequence: Facility → Span → Structure → Conduit → Equipment → Transmedia
+         - Flexible Creation: Obstacle and ReferencePoint can be created at any time after Structure creation
+        5. Data Validation: Ensure all required entities are properly created and linked
+        6. Survey Completion: Submit survey data for review and approval
 
 ### 3.3 Construction , Testing and Maintenance
 
